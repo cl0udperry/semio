@@ -1,0 +1,28 @@
+{
+  "results": [
+    {
+      "check_id": "python.weak-crypto",
+      "path": "auth.py",
+      "start": {"line": 8},
+      "end": {"line": 8},
+      "extra": {
+        "lines": "password_hash = hashlib.md5(password).hexdigest()",
+        "message": "Weak cryptographic algorithm used",
+        "severity": "HIGH",
+        "description": "MD5 is cryptographically broken and unsuitable for password storage"
+      }
+    },
+    {
+      "check_id": "python.sql-injection",
+      "path": "database.py",
+      "start": {"line": 15},
+      "end": {"line": 15},
+      "extra": {
+        "lines": "query = \"SELECT * FROM users WHERE id = \" + user_input",
+        "message": "SQL injection vulnerability detected",
+        "severity": "CRITICAL",
+        "description": "User input is directly concatenated into SQL query"
+      }
+    }
+  ]
+}
