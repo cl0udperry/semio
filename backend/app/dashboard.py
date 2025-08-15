@@ -80,7 +80,7 @@ def analyze_semgrep_file(file) -> Dict[str, Any]:
         # If test passes, try the main endpoint
         print("Testing main endpoint...")
         response = requests.post(
-            f"{get_api_url()}/api/review",
+            f"{get_api_url()}/api/review-public",
             json=semgrep_data,
             timeout=300  # 5 minutes timeout
         )
