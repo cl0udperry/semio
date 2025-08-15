@@ -5,6 +5,7 @@ Semio CLI - Command-line interface for Semio security analysis
 
 import os
 import sys
+import json
 from pathlib import Path
 from typing import Optional
 
@@ -64,8 +65,8 @@ def scan(
     
     try:
         # Prepare file for upload
-        with open(file, "rb") as f:
-            files = {"file": (file.name, f, "application/json")}
+        with open(file, "r") as f:
+            semgrep_data = json.load(f)
             
             # Prepare parameters
             params = {"format": format}
@@ -82,8 +83,8 @@ def scan(
                 
                 # Make API request
                 response = requests.post(
-                    f"{api_url}/api/review",
-                    files=files,
+                    f"{api_url}/api/review-public",
+                    json=semgrep_data,
                     params=params,
                     timeout=300  # 5 minutes timeout
                 )
