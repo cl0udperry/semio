@@ -1,7 +1,7 @@
 import time
 import asyncio
 from typing import Dict, Optional
-from fastapi import Request, HTTPException
+from fastapi import HTTPException
 from app.models.user import UserTier
 from app.services.tier_service import TierService
 
@@ -63,7 +63,7 @@ class RateLimiter:
 # Global rate limiter instance
 rate_limiter = RateLimiter()
 
-async def check_user_rate_limit(request: Request, user_id: str, tier: UserTier):
+async def check_user_rate_limit(user_id: str, tier: UserTier):
     """Middleware function to check rate limits."""
     if not await rate_limiter.check_rate_limit(user_id, tier):
         limit = TierService.get_tier_config(tier)["monthly_limit"]

@@ -1,7 +1,7 @@
 from enum import Enum
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, Field, ConfigDict
 
 class UserTier(str, Enum):
     FREE = "free"
@@ -9,8 +9,10 @@ class UserTier(str, Enum):
     ENTERPRISE = "enterprise"
 
 class User(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
-    email: EmailStr
+    email: str = Field(..., description="User email address")
     tier: UserTier = UserTier.FREE
     api_key: Optional[str] = None
     monthly_requests: int = 0
@@ -18,12 +20,9 @@ class User(BaseModel):
     created_at: datetime
     updated_at: datetime
     is_active: bool = True
-    
-    class Config:
-        from_attributes = True
 
 class UserCreate(BaseModel):
-    email: EmailStr
+    email: str = Field(..., description="User email address")
     password: str
 
 class UserUpdate(BaseModel):

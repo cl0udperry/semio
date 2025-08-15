@@ -5,10 +5,10 @@ Includes registration, login, and API key management endpoints.
 
 from datetime import timedelta
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, Field, ConfigDict
 
 from app.database import get_db
 from app.services.auth_service import AuthService, get_current_user
@@ -19,12 +19,12 @@ router = APIRouter()
 
 # Request/Response models
 class UserRegister(BaseModel):
-    email: EmailStr
+    email: str = Field(..., description="User email address")
     password: str
     tier: Optional[UserTier] = UserTier.FREE
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str = Field(..., description="User email address")
     password: str
 
 class Token(BaseModel):
@@ -33,6 +33,8 @@ class Token(BaseModel):
     expires_in: int
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     email: str
     tier: UserTier
@@ -41,9 +43,6 @@ class UserResponse(BaseModel):
     monthly_limit: int
     is_active: bool
     created_at: str
-    
-    class Config:
-        from_attributes = True
 
 class APIKeyResponse(BaseModel):
     api_key: str
@@ -59,7 +58,6 @@ class UsageResponse(BaseModel):
 @router.post("/register", response_model=UserResponse)
 async def register_user(
     user_data: UserRegister,
-    request: Request,
     db: Session = Depends(get_db)
 ):
     """
@@ -87,7 +85,7 @@ async def register_user(
     # Log registration attempt
     AuthService.log_audit_event(
         db, user.id, "user_registered", 
-        {"ip_address": request.client.host, "user_agent": request.headers.get("user-agent")}
+        {"ip_address": "unknown", "user_agent": "unknown"}
     )
     
     return UserResponse(
@@ -105,7 +103,6 @@ async def register_user(
 @router.post("/login", response_model=Token)
 async def login_user(
     user_data: UserLogin,
-    request: Request,
     db: Session = Depends(get_db)
 ):
     """
@@ -138,7 +135,7 @@ async def login_user(
     # Log login attempt
     AuthService.log_audit_event(
         db, user.id, "user_login", 
-        {"ip_address": request.client.host, "user_agent": request.headers.get("user-agent")}
+        {"ip_address": "unknown", "user_agent": "unknown"}
     )
     
     return Token(

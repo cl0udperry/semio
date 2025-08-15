@@ -27,7 +27,7 @@ class ReportGenerator:
         else:
             template = self._get_markdown_template()
         
-        return template.render(data=data, timestamp=datetime.now())
+        return template.render(data=data, timestamp=datetime.now(), zip=zip)
     
     def generate_html_report(self, data: Dict[str, Any]) -> str:
         """Generate HTML report."""
@@ -36,7 +36,7 @@ class ReportGenerator:
         else:
             template = self._get_html_template()
         
-        return template.render(data=data, timestamp=datetime.now())
+        return template.render(data=data, timestamp=datetime.now(), zip=zip)
     
     def generate_report(self, data: Dict[str, Any], format_type: str = "json") -> str:
         """Generate report in specified format."""

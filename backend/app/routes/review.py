@@ -1,15 +1,14 @@
 import json
 import os
-import asyncio
 import hashlib
 import uuid
 from datetime import datetime
-from typing import List, Dict, Optional
-from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, Query
-from fastapi.responses import JSONResponse, FileResponse
+from typing import List, Dict, Optional, Any
+from fastapi import APIRouter, HTTPException, Query, Body
+from fastapi.responses import Response
 from pydantic import BaseModel
 
-from app.services.semgrep_parser import parse_semgrep_json
+from app.services.semgrep_parser import parse_semgrep_json, validate_semgrep_output
 from app.services.llm_recommender import generate_fixes
 from app.services.report_generator import ReportGenerator
 
@@ -33,55 +32,53 @@ class ReviewRequest(BaseModel):
 
 @router.post("/review", response_model=ReviewResponse)
 async def review_semgrep_results(
-    file: UploadFile = File(...),
+    semgrep_data: Any = Body(...),
     format: str = Query("json", description="Output format: json, markdown, html"),
-    custom_prompt: Optional[str] = Query(None, description="Custom prompt for Pro/Enterprise users")
+    custom_prompt: Optional[str] = Query(None, description="Custom prompt for Pro/Enterprise users"),
+    include_code_context: bool = Query(True, description="Whether to include code context in analysis")
 ):
     """
     Main endpoint for processing semgrep JSON results.
-    Processes file in memory and returns structured fixes.
+    Processes JSON data and returns structured fixes.
     """
     errors = []
     upload_id = None
     
     try:
-        # Validate file type
-        if not file.filename.endswith('.json'):
-            raise HTTPException(status_code=400, detail="File must be a JSON file")
-        
-        # Read file content in memory
-        content = await file.read()
-        
-        # Generate upload ID using SHA256 hash of file contents
-        file_hash = hashlib.sha256(content).hexdigest()[:16]
-        upload_id = f"{file_hash}_{uuid.uuid4().hex[:8]}"
-        
-        # Parse JSON with better error handling
-        try:
-            semgrep_data = json.loads(content.decode('utf-8'))
-        except json.JSONDecodeError as e:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Invalid JSON file: {str(e)}. Please ensure the file contains valid JSON."
-            )
+        # Use the dict directly
+        semgrep_dict = semgrep_data
         
         # Validate semgrep structure
-        if not isinstance(semgrep_data, dict) or "results" not in semgrep_data:
+        if not isinstance(semgrep_dict, dict):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid semgrep format. Data must be a JSON object."
+            )
+        
+        if "results" not in semgrep_dict:
             raise HTTPException(
                 status_code=400,
                 detail="Invalid semgrep format. File must contain a 'results' array."
             )
+        
+        # Generate upload ID using SHA256 hash of data
+        content_str = json.dumps(semgrep_dict, sort_keys=True)
+        file_hash = hashlib.sha256(content_str.encode('utf-8')).hexdigest()[:16]
+        upload_id = f"{file_hash}_{uuid.uuid4().hex[:8]}"
         
         # Optional: Save to /data/ if DEBUG=True
         if os.getenv("DEBUG", "False").lower() == "true":
             debug_dir = "data"
             os.makedirs(debug_dir, exist_ok=True)
             debug_file = f"{debug_dir}/{upload_id}_semgrep_input.json"
-            with open(debug_file, "wb") as f:
-                f.write(content)
+            with open(debug_file, "w") as f:
+                json.dump(semgrep_dict, f, indent=2)
         
-        # Parse semgrep results
-        findings = parse_semgrep_json(semgrep_data)
+        # Parse semgrep results with code context
+        findings = parse_semgrep_json(semgrep_dict, include_code_context=include_code_context)
+        
+        # Validate semgrep output and provide recommendations
+        validation = validate_semgrep_output(semgrep_dict)
         
         if not findings:
             return ReviewResponse(
@@ -131,7 +128,13 @@ async def review_semgrep_results(
             "low_confidence_fixes": low_confidence,
             "fix_types": {},
             "severity_distribution": {},
-            "errors_count": len(errors)
+            "errors_count": len(errors),
+            "code_context_stats": {
+                "findings_with_code": validation["findings_with_code"],
+                "findings_without_code": validation["findings_without_code"],
+                "code_coverage_percentage": round((validation["findings_with_code"] / len(findings) * 100) if len(findings) > 0 else 0, 1)
+            },
+            "semgrep_recommendations": validation["recommendations"]
         }
         
         # Analyze fix types and severity
@@ -143,18 +146,33 @@ async def review_semgrep_results(
             fix_type = fix.get('fix_type', 'unknown')
             summary["fix_types"][fix_type] = summary["fix_types"].get(fix_type, 0) + 1
         
-        return ReviewResponse(
-            upload_id=upload_id,
-            timestamp=datetime.now().isoformat(),
-            total_vulnerabilities=len(findings),
-            high_confidence_fixes=high_confidence,
-            medium_confidence_fixes=medium_confidence,
-            low_confidence_fixes=low_confidence,
-            findings=findings,
-            fixes=fixes,
-            summary=summary,
-            errors=errors
-        )
+        # Create response data
+        response_data = {
+            "upload_id": upload_id,
+            "timestamp": datetime.now().isoformat(),
+            "total_vulnerabilities": len(findings),
+            "high_confidence_fixes": high_confidence,
+            "medium_confidence_fixes": medium_confidence,
+            "low_confidence_fixes": low_confidence,
+            "findings": findings,
+            "fixes": fixes,
+            "summary": summary,
+            "errors": errors
+        }
+        
+        # Generate report based on format
+        if format.lower() in ["markdown", "html"]:
+            from app.services.report_generator import ReportGenerator
+            report_gen = ReportGenerator()
+            report_content = report_gen.generate_report(response_data, format.lower())
+            
+            if format.lower() == "markdown":
+                return Response(content=report_content, media_type="text/markdown")
+            else:  # html
+                return Response(content=report_content, media_type="text/html")
+        else:
+            # Return JSON response
+            return ReviewResponse(**response_data)
         
     except HTTPException:
         raise
@@ -165,3 +183,42 @@ async def review_semgrep_results(
 async def health_check():
     """Health check endpoint for the review service."""
     return {"status": "healthy", "service": "review"}
+
+@router.post("/test-upload")
+async def test_upload(data: dict = Body(...)):
+    """Simple test endpoint for file upload."""
+    print(f"Test upload received data type: {type(data)}")
+    print(f"Test upload received data keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+    print(f"Test upload data preview: {str(data)[:200]}...")
+    return {"message": "Upload received", "data_keys": list(data.keys())}
+
+@router.get("/semgrep-config")
+async def get_semgrep_config(
+    target_path: str = Query(".", description="Target path to scan"),
+    rules: str = Query("auto", description="Semgrep rules to use"),
+    include_parse_tree: bool = Query(True, description="Include parse tree for better code extraction"),
+    max_lines_per_finding: int = Query(20, description="Maximum lines per finding")
+):
+    """Get optimal Semgrep command for Semio integration."""
+    from app.services.semgrep_config import get_optimal_semgrep_command, validate_semgrep_installation
+    
+    # Generate optimal command
+    command = get_optimal_semgrep_command(
+        target_path=target_path,
+        rules=rules,
+        include_parse_tree=include_parse_tree,
+        max_lines_per_finding=max_lines_per_finding
+    )
+    
+    # Check Semgrep installation
+    installation_status = validate_semgrep_installation()
+    
+    return {
+        "semgrep_command": command,
+        "installation_status": installation_status,
+        "recommendations": [
+            "Use --include-parse-tree for better code extraction",
+            "Use --max-lines-per-finding 20 for more context",
+            "Ensure source files are accessible for fallback code reading"
+        ]
+    }

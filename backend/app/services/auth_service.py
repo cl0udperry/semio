@@ -258,11 +258,10 @@ class AuthService:
 
 # Dependency functions for FastAPI
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    token: str,
     db: Session = Depends(get_db)
 ) -> User:
     """Get current user from JWT token."""
-    token = credentials.credentials
     payload = AuthService.verify_token(token)
     user_id = payload.get("sub")
     
