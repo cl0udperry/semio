@@ -2,9 +2,10 @@ import json
 import os
 import hashlib
 import uuid
+import time
 from datetime import datetime
 from typing import List, Dict, Optional, Any
-from fastapi import APIRouter, HTTPException, Query, Body, Depends
+from fastapi import APIRouter, HTTPException, Query, Body, Depends, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
 
@@ -13,6 +14,7 @@ from app.services.llm_recommender import generate_fixes
 from app.services.report_generator import ReportGenerator
 from app.services.auth_service import get_current_user
 from app.models.database_models import User
+from app.middleware.rate_limiter import rate_limiter
 
 router = APIRouter()
 
@@ -38,12 +40,21 @@ async def review_semgrep_results(
     format: str = Query("json", description="Output format: json, markdown, html"),
     custom_prompt: Optional[str] = Query(None, description="Custom prompt for Pro/Enterprise users"),
     include_code_context: bool = Query(True, description="Whether to include code context in analysis"),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    request: Request = None
 ):
     """
     Main endpoint for processing semgrep JSON results.
     Processes JSON data and returns structured fixes.
     """
+    # Check rate limit for authenticated users
+    if request and not rate_limiter.check_rate_limit(request, is_authenticated=True):
+        remaining_time = rate_limiter.get_reset_time(request, is_authenticated=True) - time.time()
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded. Try again in {int(remaining_time)} seconds"
+        )
+    
     errors = []
     upload_id = None
     

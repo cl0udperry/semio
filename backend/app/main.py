@@ -4,6 +4,7 @@ from app.routes.scan import router as scan_router
 from app.routes.review import router as review_router
 from app.routes.auth import router as auth_router
 from app.database import init_db
+from app.middleware.rate_limiter import rate_limit_middleware
 
 app = FastAPI(title="Semio API", version="1.0.0")
 
@@ -15,6 +16,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add rate limiting middleware
+app.middleware("http")(rate_limit_middleware)
 
 # Include routers
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])

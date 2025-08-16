@@ -61,32 +61,27 @@ def analyze_semgrep_file(file) -> Dict[str, Any]:
         print(f"Data keys: {list(semgrep_data.keys()) if isinstance(semgrep_data, dict) else 'Not a dict'}")
         print(f"Data preview: {str(semgrep_data)[:200]}...")
         
-        # Make API request - first test with simple endpoint
-        try:
-            print("Testing connection to API...")
-            test_response = requests.post(
-                f"{get_api_url()}/api/test-upload",
-                json=semgrep_data,
-                timeout=30
-            )
-            print(f"Test endpoint response: {test_response.status_code}")
-            print(f"Test endpoint response text: {test_response.text}")
-            if test_response.status_code != 200:
-                return {"error": f"Test endpoint failed: {test_response.status_code} - {test_response.text}"}
-        except Exception as e:
-            print(f"Test endpoint exception: {str(e)}")
-            return {"error": f"Connection test failed: {str(e)}"}
+        # Make API request with UI headers
+        headers = {
+            "Content-Type": "application/json",
+            "X-Semio-UI": "gradio-dashboard",
+            "User-Agent": "Semio-Gradio-Dashboard/1.0"
+        }
         
-        # If test passes, try the main endpoint
-        print("Testing main endpoint...")
+        print("Making request to public endpoint...")
         response = requests.post(
             f"{get_api_url()}/api/review-public",
             json=semgrep_data,
+            headers=headers,
             timeout=300  # 5 minutes timeout
         )
         
         if response.status_code == 200:
             return response.json()
+        elif response.status_code == 429:
+            return {"error": "Rate limit exceeded. Please try again later."}
+        elif response.status_code == 403:
+            return {"error": "Access denied. This endpoint can only be accessed through the Semio dashboard."}
         else:
             return {"error": f"API Error: {response.status_code} - {response.text}"}
             
