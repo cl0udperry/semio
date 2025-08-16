@@ -132,46 +132,27 @@ rate_limiter = RateLimiter()
 
 async def rate_limit_middleware(request: Request, call_next):
     """Rate limiting middleware."""
-    # Skip rate limiting for health checks and static files
-    if request.url.path in ["/health", "/docs", "/openapi.json"]:
-        return await call_next(request)
+    print(f"🔒 Middleware triggered for: {request.url.path}")
     
-    # Check if this is a public endpoint
-    is_public_endpoint = request.url.path == "/api/review-public"
+    # Test middleware with a simple endpoint
+    if request.url.path == "/test-middleware":
+        print("🔒 Middleware test endpoint hit!")
+        return JSONResponse(
+            status_code=200,
+            content={"message": "Middleware is working!"}
+        )
     
-    if is_public_endpoint:
-        # For public endpoint, check UI access and rate limits
-        if not rate_limiter.is_ui_request(request):
-            return JSONResponse(
-                status_code=status.HTTP_403_FORBIDDEN,
-                content={
-                    "error": "Direct API access not allowed",
-                    "message": "This endpoint can only be accessed through the Semio dashboard"
-                }
-            )
-        
-        # Check rate limit
-        if not rate_limiter.check_rate_limit(request, is_authenticated=False):
-            remaining_time = rate_limiter.get_reset_time(request, is_authenticated=False) - time.time()
-            return JSONResponse(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                content={
-                    "error": "Rate limit exceeded",
-                    "message": f"Too many requests. Try again in {int(remaining_time)} seconds",
-                    "reset_time": int(rate_limiter.get_reset_time(request, is_authenticated=False))
-                }
-            )
+    # Always block direct access to public endpoint for testing
+    if request.url.path == "/api/review-public":
+        print("🔒 BLOCKING ALL ACCESS TO PUBLIC ENDPOINT FOR TESTING")
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content={
+                "error": "Direct API access not allowed",
+                "message": "This endpoint can only be accessed through the Semio dashboard"
+            }
+        )
     
-    # For authenticated endpoints, rate limiting is handled by the endpoint itself
+    # For all other requests, proceed normally
     response = await call_next(request)
-    
-    # Add rate limit headers for public endpoint
-    if is_public_endpoint:
-        remaining = rate_limiter.get_remaining_requests(request, is_authenticated=False)
-        reset_time = rate_limiter.get_reset_time(request, is_authenticated=False)
-        
-        response.headers["X-RateLimit-Remaining"] = str(remaining)
-        response.headers["X-RateLimit-Reset"] = str(int(reset_time))
-        response.headers["X-RateLimit-Limit"] = str(rate_limiter.max_requests)
-    
     return response
