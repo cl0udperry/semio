@@ -91,3 +91,13 @@ async def health_check():
 @app.get("/test-middleware")
 async def test_middleware():
     return {"message": "This should be blocked by middleware"}
+
+# Import and create Gradio app
+from app.dashboard import create_dashboard
+import gradio as gr
+
+# Create the Gradio interface
+dashboard = create_dashboard()
+
+# Mount the Gradio app using the correct method
+app = gr.mount_gradio_app(app, dashboard, path="/dashboard")
