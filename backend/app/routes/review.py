@@ -101,9 +101,10 @@ async def review_semgrep_results(
                 upload_id=upload_id,
                 timestamp=datetime.now().isoformat(),
                 total_vulnerabilities=0,
-                high_confidence_fixes=0,
-                medium_confidence_fixes=0,
-                low_confidence_fixes=0,
+                error_severity_count=0,
+                warning_severity_count=0,
+                info_severity_count=0,
+                unknown_severity_count=0,
                 findings=[],
                 fixes=[],
                 summary={"message": "No vulnerabilities found"},
@@ -263,9 +264,10 @@ async def review_semgrep_results_public(
                 upload_id=upload_id,
                 timestamp=datetime.now().isoformat(),
                 total_vulnerabilities=0,
-                high_confidence_fixes=0,
-                medium_confidence_fixes=0,
-                low_confidence_fixes=0,
+                error_severity_count=0,
+                warning_severity_count=0,
+                info_severity_count=0,
+                unknown_severity_count=0,
                 findings=[],
                 fixes=[],
                 summary={"message": "No vulnerabilities found"},
@@ -293,17 +295,19 @@ async def review_semgrep_results_public(
                     "error": f"LLM Error: {str(e)}"
                 })
         
-        # Calculate confidence statistics
-        high_confidence = len([f for f in fixes if f.get('confidence_score', 0) >= 0.8])
-        medium_confidence = len([f for f in fixes if 0.5 <= f.get('confidence_score', 0) < 0.8])
-        low_confidence = len([f for f in fixes if f.get('confidence_score', 0) < 0.5])
+        # Calculate severity-based statistics
+        error_severity = len([f for f in findings if f.get('severity', 'UNKNOWN') == 'ERROR'])
+        warning_severity = len([f for f in findings if f.get('severity', 'UNKNOWN') == 'WARNING'])
+        info_severity = len([f for f in findings if f.get('severity', 'UNKNOWN') == 'INFO'])
+        unknown_severity = len([f for f in findings if f.get('severity', 'UNKNOWN') not in ['ERROR', 'WARNING', 'INFO']])
         
         # Generate summary
         summary = {
             "total_vulnerabilities": len(findings),
-            "high_confidence_fixes": high_confidence,
-            "medium_confidence_fixes": medium_confidence,
-            "low_confidence_fixes": low_confidence,
+            "error_severity_count": error_severity,
+            "warning_severity_count": warning_severity,
+            "info_severity_count": info_severity,
+            "unknown_severity_count": unknown_severity,
             "fix_types": {},
             "severity_distribution": {},
             "errors_count": len(errors),
@@ -329,9 +333,10 @@ async def review_semgrep_results_public(
             "upload_id": upload_id,
             "timestamp": datetime.now().isoformat(),
             "total_vulnerabilities": len(findings),
-            "high_confidence_fixes": high_confidence,
-            "medium_confidence_fixes": medium_confidence,
-            "low_confidence_fixes": low_confidence,
+            "error_severity_count": error_severity,
+            "warning_severity_count": warning_severity,
+            "info_severity_count": info_severity,
+            "unknown_severity_count": unknown_severity,
             "findings": findings,
             "fixes": fixes,
             "summary": summary,

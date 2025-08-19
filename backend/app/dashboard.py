@@ -159,9 +159,10 @@ def format_results(data: Dict[str, Any]) -> str:
 ## 📊 Summary
 
 - **Total Vulnerabilities:** {data.get('total_vulnerabilities', 0)}
-- **High Confidence Fixes:** {data.get('high_confidence_fixes', 0)}
-- **Medium Confidence Fixes:** {data.get('medium_confidence_fixes', 0)}
-- **Low Confidence Fixes:** {data.get('low_confidence_fixes', 0)}
+- **Error Severity (High/Critical):** {data.get('error_severity_count', 0)}
+- **Warning Severity (Medium):** {data.get('warning_severity_count', 0)}
+- **Info Severity (Low):** {data.get('info_severity_count', 0)}
+- **Unknown Severity:** {data.get('unknown_severity_count', 0)}
 - **Errors:** {len(data.get('errors', []))}
 
 ## 🎯 Severity Distribution
