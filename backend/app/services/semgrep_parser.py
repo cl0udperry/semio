@@ -21,7 +21,7 @@ def parse_semgrep_json(data, include_code_context: bool = True):
             "end_line": finding.get("end", {}).get("line", finding["start"]["line"]),
             "code": None,  # Will be populated below
             "message": finding["extra"].get("message", ""),
-            "severity": finding.get("extra", {}).get("metadata", {}).get("severity", "UNKNOWN"),
+            "severity": finding["extra"].get("severity", "UNKNOWN"),  # Direct severity from extra
             "metadata": finding.get("extra", {}).get("metadata", {})
         }
         

@@ -188,3 +188,18 @@ class APIKey(Base):
         Index("idx_api_keys_user_active", "user_id", "is_active"),
         Index("idx_api_keys_hash", "key_hash"),
     )
+
+# API Keys table for CLI access
+API_KEYS_TABLE = """
+CREATE TABLE IF NOT EXISTS api_keys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    key_hash TEXT NOT NULL UNIQUE,
+    key_name TEXT NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL,
+    revoked_at DATETIME,
+    is_active BOOLEAN DEFAULT 1,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+"""

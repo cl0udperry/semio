@@ -6,6 +6,7 @@ Includes password hashing, JWT token management, and API key generation.
 import os
 import uuid
 import secrets
+import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Union
 from sqlalchemy.orm import Session
@@ -49,6 +50,57 @@ class AuthService:
     def generate_api_key() -> str:
         """Generate a secure API key."""
         return secrets.token_urlsafe(API_KEY_LENGTH)
+    
+    @staticmethod
+    def generate_secure_api_key() -> str:
+        """Generate a secure API key for CLI access."""
+        # Generate 32 bytes of random data and encode as hex
+        return secrets.token_hex(32)
+    
+    @staticmethod
+    def hash_api_key(api_key: str) -> str:
+        """Hash an API key for secure storage."""
+        return hashlib.sha256(api_key.encode()).hexdigest()
+    
+    @staticmethod
+    def validate_api_key(api_key: str) -> Optional[dict]:
+        """Validate an API key and return user info if valid."""
+        try:
+            from app.database import SessionLocal
+            from app.models.database_models import APIKey, User
+            
+            # Hash the provided API key
+            key_hash = AuthService.hash_api_key(api_key)
+            
+            # Create a new database session
+            db = SessionLocal()
+            
+            # Check if key exists and is valid
+            api_key_record = db.query(APIKey).filter(
+                APIKey.key_hash == key_hash,
+                APIKey.is_active == True,
+                APIKey.expires_at > datetime.now()
+            ).first()
+            
+            if api_key_record:
+                user = db.query(User).filter(User.id == api_key_record.user_id).first()
+                if user:
+                    return {
+                        "user_id": user.id,
+                        "email": user.email,
+                        "tier": user.tier,
+                        "key_name": api_key_record.name,
+                        "expires_at": api_key_record.expires_at
+                    }
+            
+            return None
+            
+        except Exception as e:
+            print(f"Error validating API key: {e}")
+            return None
+        finally:
+            if 'db' in locals():
+                db.close()
     
     @staticmethod
     def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

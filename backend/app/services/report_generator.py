@@ -62,9 +62,10 @@ class ReportGenerator:
 ## Summary
 
 - **Total Vulnerabilities:** {{ data.total_vulnerabilities }}
-- **High Confidence Fixes:** {{ data.high_confidence_fixes }}
-- **Medium Confidence Fixes:** {{ data.medium_confidence_fixes }}
-- **Low Confidence Fixes:** {{ data.low_confidence_fixes }}
+- **Error Severity (High/Critical):** {{ data.error_severity_count }}
+- **Warning Severity (Medium):** {{ data.warning_severity_count }}
+- **Info Severity (Low):** {{ data.info_severity_count }}
+- **Unknown Severity:** {{ data.unknown_severity_count }}
 - **Errors:** {{ data.errors|length }}
 
 ## Severity Distribution
@@ -86,7 +87,7 @@ class ReportGenerator:
 
 **File:** `{{ finding.path }}`  
 **Line:** {{ finding.start_line }}  
-**Severity:** {{ finding.severity }}  
+**Severity:** {{ finding.severity }} {% if finding.severity == 'ERROR' %}(High/Critical){% elif finding.severity == 'WARNING' %}(Medium){% elif finding.severity == 'INFO' %}(Low){% endif %}  
 **Message:** {{ finding.message }}
 
 **Vulnerable Code:**
@@ -141,13 +142,13 @@ class ReportGenerator:
         .summary-card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
         .vulnerability { background: #fff; border: 1px solid #ddd; margin: 20px 0; padding: 20px; border-radius: 5px; }
         .code-block { background: #f8f8f8; padding: 15px; border-radius: 5px; overflow-x: auto; }
-        .high-confidence { border-left: 4px solid #28a745; }
-        .medium-confidence { border-left: 4px solid #ffc107; }
-        .low-confidence { border-left: 4px solid #dc3545; }
-        .confidence-badge { padding: 4px 8px; border-radius: 3px; color: white; font-size: 12px; }
-        .high { background: #28a745; }
-        .medium { background: #ffc107; color: #000; }
-        .low { background: #dc3545; }
+        .error-severity { border-left: 4px solid #dc3545; }
+        .warning-severity { border-left: 4px solid #ffc107; }
+        .info-severity { border-left: 4px solid #28a745; }
+        .severity-badge { padding: 4px 8px; border-radius: 3px; color: white; font-size: 12px; }
+        .error { background: #dc3545; }
+        .warning { background: #ffc107; color: #000; }
+        .info { background: #28a745; }
         .errors { background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; }
     </style>
 </head>
@@ -164,27 +165,27 @@ class ReportGenerator:
             <p style="font-size: 24px; font-weight: bold;">{{ data.total_vulnerabilities }}</p>
         </div>
         <div class="summary-card">
-            <h3>High Confidence Fixes</h3>
-            <p style="font-size: 24px; font-weight: bold; color: #28a745;">{{ data.high_confidence_fixes }}</p>
+            <h3>Error Severity (High/Critical)</h3>
+            <p style="font-size: 24px; font-weight: bold; color: #dc3545;">{{ data.error_severity_count }}</p>
         </div>
         <div class="summary-card">
-            <h3>Medium Confidence Fixes</h3>
-            <p style="font-size: 24px; font-weight: bold; color: #ffc107;">{{ data.medium_confidence_fixes }}</p>
+            <h3>Warning Severity (Medium)</h3>
+            <p style="font-size: 24px; font-weight: bold; color: #ffc107;">{{ data.warning_severity_count }}</p>
         </div>
         <div class="summary-card">
-            <h3>Low Confidence Fixes</h3>
-            <p style="font-size: 24px; font-weight: bold; color: #dc3545;">{{ data.low_confidence_fixes }}</p>
+            <h3>Info Severity (Low)</h3>
+            <p style="font-size: 24px; font-weight: bold; color: #28a745;">{{ data.info_severity_count }}</p>
         </div>
     </div>
 
     {% if data.findings and data.fixes %}
     <h2>Vulnerabilities and Fixes</h2>
     {% for finding, fix in zip(data.findings, data.fixes) %}
-    <div class="vulnerability {% if fix.confidence_score >= 0.8 %}high-confidence{% elif fix.confidence_score >= 0.5 %}medium-confidence{% else %}low-confidence{% endif %}">
+    <div class="vulnerability {% if finding.severity == 'ERROR' %}error-severity{% elif finding.severity == 'WARNING' %}warning-severity{% elif finding.severity == 'INFO' %}info-severity{% endif %}">
         <h3>{{ finding.rule_id }}</h3>
         <p><strong>File:</strong> <code>{{ finding.path }}</code></p>
         <p><strong>Line:</strong> {{ finding.start_line }}</p>
-        <p><strong>Severity:</strong> {{ finding.severity }}</p>
+        <p><strong>Severity:</strong> {{ finding.severity }} {% if finding.severity == 'ERROR' %}(High/Critical){% elif finding.severity == 'WARNING' %}(Medium){% elif finding.severity == 'INFO' %}(Low){% endif %}</p>
         <p><strong>Message:</strong> {{ finding.message }}</p>
         
         <h4>Vulnerable Code:</h4>
@@ -198,9 +199,9 @@ class ReportGenerator:
         </div>
         
         <p>
-            <strong>Confidence:</strong> 
-            <span class="confidence-badge {% if fix.confidence_score >= 0.8 %}high{% elif fix.confidence_score >= 0.5 %}medium{% else %}low{% endif %}">
-                {{ "%.1f"|format(fix.confidence_score * 100) }}%
+            <strong>Severity:</strong> 
+            <span class="severity-badge {% if finding.severity == 'ERROR' %}error{% elif finding.severity == 'WARNING' %}warning{% elif finding.severity == 'INFO' %}info{% endif %}">
+                {{ finding.severity }} {% if finding.severity == 'ERROR' %}(High/Critical){% elif finding.severity == 'WARNING' %}(Medium){% elif finding.severity == 'INFO' %}(Low){% endif %}
             </span>
         </p>
         <p><strong>Impact:</strong> {{ fix.impact }}</p>
