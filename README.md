@@ -1,8 +1,8 @@
-# 🔒 Semio - AI-Powered Security Analysis
+# Semio - AI-Powered Security Analysis
 
 Semio is an intelligent security analysis tool that processes Semgrep results and generates AI-powered fix recommendations. It provides both a REST API and a web dashboard for analyzing security vulnerabilities.
 
-## 🚀 Features
+## Features
 
 - **AI-Powered Fix Generation**: Uses LLM to generate intelligent security fixes
 - **Enhanced Code Context**: Multiple strategies for extracting code from Semgrep results
@@ -12,13 +12,13 @@ Semio is an intelligent security analysis tool that processes Semgrep results an
 - **Rate Limiting**: Built-in rate limiting for API usage
 - **Authentication**: User registration and API key management
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Python 3.8+
 - Semgrep CLI tool
 - Google API key (for LLM functionality)
 
-## 🛠️ Installation
+## Installation
 
 1. **Clone the repository:**
    ```bash
@@ -47,7 +47,7 @@ Semio is an intelligent security analysis tool that processes Semgrep results an
    python -c "from app.database import init_db; init_db()"
    ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Start the API Server
 
@@ -67,7 +67,7 @@ python app/dashboard.py
 
 The dashboard will be available at `http://localhost:7860`
 
-## 📖 API Usage
+## API Usage
 
 ### Basic Usage
 
@@ -114,7 +114,7 @@ curl -X POST "http://localhost:8000/api/review?format=html" \
   -d @semgrep-results.json
 ```
 
-## 🔧 Semgrep Configuration
+## Semgrep Configuration
 
 For optimal results with Semio, use these Semgrep flags:
 
@@ -154,7 +154,7 @@ semio/
 └── README.md
 ```
 
-## 🔐 Authentication
+## Authentication
 
 Semio supports user authentication with different tiers:
 
@@ -210,7 +210,7 @@ curl "http://localhost:8000/health"
 curl "http://localhost:8000/api/semgrep-config"
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -230,7 +230,7 @@ DATABASE_URL=postgresql://user:password@localhost/semio
 USE_SQLITE=false
 ```
 
-## 🚀 Deployment
+## Deployment
 
 ### Docker Deployment
 

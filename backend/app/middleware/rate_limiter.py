@@ -132,7 +132,7 @@ rate_limiter = RateLimiter()
 
 async def rate_limit_middleware(request: Request, call_next):
     """Rate limiting middleware."""
-            print(f"Middleware triggered for: {request.url.path}")
+    print(f"Middleware triggered for: {request.url.path}")
     
     # Test middleware with a simple endpoint
     if request.url.path == "/test-middleware":
