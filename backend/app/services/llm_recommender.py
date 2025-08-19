@@ -194,7 +194,7 @@ Return ONLY the JSON object, no additional text.
                     suggested_fix = suggested_fix.split('\n')[0].strip()
                 
                 if not has_code_snippet:
-                    disclaimer = "⚠️ **GENERIC FIX SUGGESTION** - No vulnerable code was provided in the Semgrep report. This is a general security pattern for this type of vulnerability.\n\n"
+                    disclaimer = "**GENERIC FIX SUGGESTION** - No vulnerable code was provided in the Semgrep report. This is a general security pattern for this type of vulnerability.\n\n"
                     suggested_fix = disclaimer + suggested_fix
                 
                 suggestions.append({
@@ -221,7 +221,7 @@ Return ONLY the JSON object, no additional text.
                     suggested_fix = suggested_fix.split('\n')[0].strip()
                 
                 if not has_code_snippet:
-                    disclaimer = "⚠️ **GENERIC FIX SUGGESTION** - No vulnerable code was provided in the Semgrep report. This is a general security pattern for this type of vulnerability.\n\n"
+                    disclaimer = "**GENERIC FIX SUGGESTION** - No vulnerable code was provided in the Semgrep report. This is a general security pattern for this type of vulnerability.\n\n"
                     suggested_fix = disclaimer + answer
                 
                 suggestions.append({
@@ -241,7 +241,7 @@ Return ONLY the JSON object, no additional text.
             # Add disclaimer for generic fixes even in error cases
             suggested_fix = f"LLM Error: {e}"
             if not has_code_snippet:
-                disclaimer = "⚠️ **GENERIC FIX SUGGESTION** - No vulnerable code was provided in the Semgrep report. This is a general security pattern for this type of vulnerability.\n\n"
+                disclaimer = "**GENERIC FIX SUGGESTION** - No vulnerable code was provided in the Semgrep report. This is a general security pattern for this type of vulnerability.\n\n"
                 suggested_fix = disclaimer + f"LLM Error: {e}"
             
             suggestions.append({

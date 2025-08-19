@@ -31,19 +31,19 @@ def generate_api_key(email: str, password: str, key_name: str, expires_days: int
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ API key generated successfully!")
+            print(f"API key generated successfully!")
             print(f"   Key Name: {result['key_name']}")
             print(f"   Expires: {result['expires_at']}")
             print(f"   API Key: {result['api_key']}")
-            print(f"\n🔐 Store this API key securely in your GitLab CI/CD variables!")
+            print(f"\nStore this API key securely in your GitLab CI/CD variables!")
             return result['api_key']
         else:
-            print(f"❌ Failed to generate API key: {response.status_code}")
+            print(f"Failed to generate API key: {response.status_code}")
             print(f"   Response: {response.text}")
             return None
             
     except requests.exceptions.RequestException as e:
-        print(f"❌ Request failed: {e}")
+        print(f"Request failed: {e}")
         return None
 
 def list_api_keys(email: str, password: str):
@@ -58,21 +58,21 @@ def list_api_keys(email: str, password: str):
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ Found {len(result['api_keys'])} API keys:")
+            print(f"Found {len(result['api_keys'])} API keys:")
             print()
             
             for key in result['api_keys']:
-                print(f"   📋 {key['key_name']}")
+                print(f"   {key['key_name']}")
                 print(f"      Created: {key['created_at']}")
                 print(f"      Expires: {key['expires_at']}")
-                print(f"      Active: {'✅' if key['is_active'] else '❌'}")
+                print(f"      Active: {'Yes' if key['is_active'] else 'No'}")
                 print()
         else:
-            print(f"❌ Failed to list API keys: {response.status_code}")
+            print(f"Failed to list API keys: {response.status_code}")
             print(f"   Response: {response.text}")
             
     except requests.exceptions.RequestException as e:
-        print(f"❌ Request failed: {e}")
+        print(f"Request failed: {e}")
 
 def revoke_api_key(email: str, password: str, key_name: str):
     """Revoke an API key."""
@@ -87,13 +87,13 @@ def revoke_api_key(email: str, password: str, key_name: str):
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ {result['message']}")
+            print(f"{result['message']}")
         else:
-            print(f"❌ Failed to revoke API key: {response.status_code}")
+            print(f"Failed to revoke API key: {response.status_code}")
             print(f"   Response: {response.text}")
             
     except requests.exceptions.RequestException as e:
-        print(f"❌ Request failed: {e}")
+        print(f"Request failed: {e}")
 
 def main():
     """Main function."""
@@ -115,7 +115,7 @@ def main():
     
     if command == "generate":
         if len(sys.argv) < 5:
-            print("❌ Missing arguments for generate command")
+            print("Missing arguments for generate command")
             sys.exit(1)
         
         email = sys.argv[2]
@@ -123,34 +123,34 @@ def main():
         key_name = sys.argv[4]
         expires_days = int(sys.argv[5]) if len(sys.argv) > 5 else 30
         
-        print(f"🔑 Generating API key '{key_name}' for {email}...")
+        print(f"Generating API key '{key_name}' for {email}...")
         generate_api_key(email, password, key_name, expires_days)
         
     elif command == "list":
         if len(sys.argv) < 4:
-            print("❌ Missing arguments for list command")
+            print("Missing arguments for list command")
             sys.exit(1)
         
         email = sys.argv[2]
         password = sys.argv[3]
         
-        print(f"📋 Listing API keys for {email}...")
+        print(f"Listing API keys for {email}...")
         list_api_keys(email, password)
         
     elif command == "revoke":
         if len(sys.argv) < 5:
-            print("❌ Missing arguments for revoke command")
+            print("Missing arguments for revoke command")
             sys.exit(1)
         
         email = sys.argv[2]
         password = sys.argv[3]
         key_name = sys.argv[4]
         
-        print(f"🗑️  Revoking API key '{key_name}' for {email}...")
+        print(f"Revoking API key '{key_name}' for {email}...")
         revoke_api_key(email, password, key_name)
         
     else:
-        print(f"❌ Unknown command: {command}")
+        print(f"Unknown command: {command}")
         sys.exit(1)
 
 if __name__ == "__main__":

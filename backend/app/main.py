@@ -20,11 +20,11 @@ app.add_middleware(
 # Add rate limiting middleware
 @app.middleware("http")
 async def rate_limit_middleware_wrapper(request: Request, call_next):
-    print(f"🔒 Middleware triggered for: {request.url.path}")
+    print(f"Middleware triggered for: {request.url.path}")
     
     # Test middleware with a simple endpoint
     if request.url.path == "/test-middleware":
-        print("🔒 Middleware test endpoint hit!")
+        print("Middleware test endpoint hit!")
         from fastapi.responses import JSONResponse
         return JSONResponse(
             status_code=200,
@@ -39,10 +39,10 @@ async def rate_limit_middleware_wrapper(request: Request, call_next):
         
         # Check if request is coming from UI
         is_ui_request = rate_limiter.is_ui_request(request)
-        print(f"🔒 Is UI request: {is_ui_request}")
+        print(f"Is UI request: {is_ui_request}")
         
         if not is_ui_request:
-            print("🔒 Blocking direct API access")
+            print("Blocking direct API access")
             return JSONResponse(
                 status_code=status.HTTP_403_FORBIDDEN,
                 content={
@@ -53,11 +53,11 @@ async def rate_limit_middleware_wrapper(request: Request, call_next):
         
         # Check rate limit for UI requests
         rate_limit_ok = rate_limiter.check_rate_limit(request, is_authenticated=False)
-        print(f"🔒 Rate limit check: {rate_limit_ok}")
+        print(f"Rate limit check: {rate_limit_ok}")
         
         if not rate_limit_ok:
             remaining_time = rate_limiter.get_reset_time(request, is_authenticated=False) - time.time()
-            print(f"🔒 Rate limit exceeded, remaining time: {remaining_time}")
+            print(f"Rate limit exceeded, remaining time: {remaining_time}")
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 content={

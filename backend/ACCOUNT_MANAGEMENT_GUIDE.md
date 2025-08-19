@@ -125,12 +125,12 @@ Examples:
 - **Emergency**: 7 days (for urgent fixes)
 
 #### **Security Guidelines**
-- ✅ Use descriptive names
-- ✅ Set appropriate expiration dates
-- ✅ Rotate keys regularly
-- ✅ Monitor key usage
-- ❌ Never share keys in code
-- ❌ Don't use the same key for multiple purposes
+- Use descriptive names
+- Set appropriate expiration dates
+- Rotate keys regularly
+- Monitor key usage
+- Never share keys in code
+- Don't use the same key for multiple purposes
 
 ### **3. API Key Usage Examples**
 
@@ -172,7 +172,7 @@ response = requests.post(
 
 ---
 
-## 🛡️ **Security & Access Control**
+## **Security & Access Control**
 
 ### **1. Rate Limiting Strategy**
 
@@ -190,11 +190,11 @@ response = requests.post(
 
 | Endpoint | Free UI | Pro UI | Enterprise UI | CLI (API Key) |
 |----------|---------|--------|---------------|---------------|
-| `/api/review-public` | ✅ | ✅ | ✅ | ❌ |
-| `/api/review` | ✅ | ✅ | ✅ | ❌ |
-| `/api/review-cli` | ❌ | ✅ | ✅ | ✅ |
-| `/api/review-agentic` | ❌ | ✅ | ✅ | ❌ |
-| `/api/review-agentic-cli` | ❌ | ❌ | ✅ | ✅ |
+| `/api/review-public` | Yes | Yes | Yes | No |
+| `/api/review` | Yes | Yes | Yes | No |
+| `/api/review-cli` | No | Yes | Yes | Yes |
+| `/api/review-agentic` | No | Yes | Yes | No |
+| `/api/review-agentic-cli` | No | No | Yes | Yes |
 
 ### **3. Security Monitoring**
 
@@ -211,7 +211,7 @@ python api_key_manager.py monitor-usage --key-name "production-cli"
 
 ---
 
-## 🚀 **Production Deployment Checklist**
+## **Production Deployment Checklist**
 
 ### **1. Pre-Deployment**
 - [ ] Set up admin account
@@ -236,7 +236,7 @@ python api_key_manager.py monitor-usage --key-name "production-cli"
 
 ---
 
-## 📊 **Administrative Tools**
+## **Administrative Tools**
 
 ### **1. User Management Scripts**
 
@@ -345,7 +345,7 @@ python api_key_manager.py get-user-info --email user@company.com
 
 ---
 
-## 🎯 **Best Practices Summary**
+## **Best Practices Summary**
 
 ### **For Administrators**
 1. **Regular Audits**: Review user accounts and API keys monthly

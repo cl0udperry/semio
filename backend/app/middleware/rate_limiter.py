@@ -132,11 +132,11 @@ rate_limiter = RateLimiter()
 
 async def rate_limit_middleware(request: Request, call_next):
     """Rate limiting middleware."""
-    print(f"🔒 Middleware triggered for: {request.url.path}")
+            print(f"Middleware triggered for: {request.url.path}")
     
     # Test middleware with a simple endpoint
     if request.url.path == "/test-middleware":
-        print("🔒 Middleware test endpoint hit!")
+        print("Middleware test endpoint hit!")
         return JSONResponse(
             status_code=200,
             content={"message": "Middleware is working!"}
@@ -144,7 +144,7 @@ async def rate_limit_middleware(request: Request, call_next):
     
     # Always block direct access to public endpoint for testing
     if request.url.path == "/api/review-public":
-        print("🔒 BLOCKING ALL ACCESS TO PUBLIC ENDPOINT FOR TESTING")
+        print("BLOCKING ALL ACCESS TO PUBLIC ENDPOINT FOR TESTING")
         return JSONResponse(
             status_code=status.HTTP_403_FORBIDDEN,
             content={

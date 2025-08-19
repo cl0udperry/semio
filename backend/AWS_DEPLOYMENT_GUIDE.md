@@ -1,6 +1,6 @@
-# 🚀 AWS Elastic Beanstalk Deployment Guide for Semio
+# AWS Elastic Beanstalk Deployment Guide for Semio
 
-## 📋 Prerequisites Checklist
+## Prerequisites Checklist
 - [ ] AWS Account (Free Tier)
 - [ ] AWS CLI installed
 - [ ] EB CLI installed
@@ -9,7 +9,7 @@
 
 ---
 
-## 🔧 Step 1: AWS Account Setup
+## Step 1: AWS Account Setup
 
 ### 1.1 Create AWS Account
 1. Go to [AWS Console](https://aws.amazon.com/)
@@ -68,7 +68,7 @@ aws configure
 
 ---
 
-## 🚀 Step 4: Deploy to AWS
+## Step 4: Deploy to AWS
 
 ### 4.1 Initialize EB Application
 ```bash
@@ -108,7 +108,7 @@ eb open
 
 ---
 
-## 🔒 Step 5: Verify Security Features
+## Step 5: Verify Security Features
 
 ### 5.1 Test Your Application
 1. Visit the URL provided by EB
@@ -165,7 +165,7 @@ eb logs
 
 ---
 
-## ⚠️ Important Notes
+## Important Notes
 
 ### Free Tier Limits:
 - **750 hours/month** of t2.micro instances
@@ -204,7 +204,7 @@ eb terminate       # Delete environment
 
 ---
 
-## 🎯 Success Checklist
+## Success Checklist
 - [ ] Application deployed successfully
 - [ ] Health endpoint responding
 - [ ] Security features working
@@ -213,4 +213,4 @@ eb terminate       # Delete environment
 - [ ] Usage within free tier limits
 - [ ] Application accessible via public URL
 
-**Your Semio application is now live on AWS! 🎉**
+**Your Semio application is now live on AWS!**

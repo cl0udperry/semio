@@ -147,16 +147,16 @@ def create_sample_data() -> str:
 def format_results(data: Dict[str, Any]) -> str:
     """Format results for display."""
     if "error" in data:
-        return f"❌ **Error:** {data['error']}"
+        return f"**Error:** {data['error']}"
     
     # Create summary
     summary = f"""
-# 🔒 Semio Security Analysis Results
+# Semio Security Analysis Results
 
 **Upload ID:** {data.get('upload_id', 'N/A')}  
 **Timestamp:** {data.get('timestamp', 'N/A')}
 
-## 📊 Summary
+## Summary
 
 - **Total Vulnerabilities:** {data.get('total_vulnerabilities', 0)}
 - **Error Severity (High/Critical):** {data.get('error_severity_count', 0)}
@@ -165,14 +165,14 @@ def format_results(data: Dict[str, Any]) -> str:
 - **Unknown Severity:** {data.get('unknown_severity_count', 0)}
 - **Errors:** {len(data.get('errors', []))}
 
-## 🎯 Severity Distribution
+## Severity Distribution
 """
     
     severity_dist = data.get('summary', {}).get('severity_distribution', {})
     for severity, count in severity_dist.items():
         summary += f"- **{severity}:** {count}\n"
     
-    summary += "\n## 🔧 Fix Types\n"
+    summary += "\n## Fix Types\n"
     fix_types = data.get('summary', {}).get('fix_types', {})
     for fix_type, count in fix_types.items():
         summary += f"- **{fix_type}:** {count}\n"
@@ -180,7 +180,7 @@ def format_results(data: Dict[str, Any]) -> str:
     # Add code context information
     code_stats = data.get('summary', {}).get('code_context_stats', {})
     if code_stats:
-        summary += f"\n## 📊 Code Context Analysis\n"
+        summary += f"\n## Code Context Analysis\n"
         summary += f"- **Findings with Code:** {code_stats.get('findings_with_code', 0)}\n"
         summary += f"- **Findings without Code:** {code_stats.get('findings_without_code', 0)}\n"
         summary += f"- **Code Coverage:** {code_stats.get('code_coverage_percentage', 0)}%\n"
@@ -188,7 +188,7 @@ def format_results(data: Dict[str, Any]) -> str:
     # Add Semgrep recommendations
     recommendations = data.get('summary', {}).get('semgrep_recommendations', [])
     if recommendations:
-        summary += f"\n## 💡 Semgrep Recommendations\n"
+        summary += f"\n## Semgrep Recommendations\n"
         for rec in recommendations:
             summary += f"- {rec}\n"
     
@@ -197,7 +197,7 @@ def format_results(data: Dict[str, Any]) -> str:
     fixes = data.get('fixes', [])
     
     if findings and fixes:
-        summary += "\n## 🚨 Vulnerabilities and Fixes\n\n"
+        summary += "\n## Vulnerabilities and Fixes\n\n"
         for i, (finding, fix) in enumerate(zip(findings, fixes), 1):
             confidence = f"{fix.get('confidence_score', 0) * 100:.1f}%"
             summary += f"""
@@ -226,7 +226,7 @@ def format_results(data: Dict[str, Any]) -> str:
     # Add errors if any
     errors = data.get('errors', [])
     if errors:
-        summary += "\n## ⚠️ Errors\n\n"
+        summary += "\n## Errors\n\n"
         for error in errors:
             summary += f"- **{error.get('finding_id', 'Unknown')}** ({error.get('file', 'Unknown')}): {error.get('error', 'Unknown error')}\n"
     
@@ -251,7 +251,7 @@ def create_dashboard():
         
         # Header
         gr.Markdown("""
-        # 🔒 Semio - AI-Powered Security Analysis
+        # Semio - AI-Powered Security Analysis
         
         Upload your Semgrep JSON results and get intelligent security fix recommendations powered by AI.
         """, elem_classes=["main-header"])
@@ -266,10 +266,10 @@ def create_dashboard():
                 )
                 
                 # Sample data button
-                sample_btn = gr.Button("📋 Load Sample Data", variant="secondary")
+                sample_btn = gr.Button("Load Sample Data", variant="secondary")
                 
                 # Analyze button
-                analyze_btn = gr.Button("🔍 Analyze Vulnerabilities", variant="primary", size="lg")
+                analyze_btn = gr.Button("Analyze Vulnerabilities", variant="primary", size="lg")
                 
                 # API URL input
                 api_url_input = gr.Textbox(
@@ -302,12 +302,12 @@ def create_dashboard():
         # Report generation section
         with gr.Row():
             with gr.Column():
-                gr.Markdown("### 📄 Generate Reports")
+                gr.Markdown("### Generate Reports")
                 
                 with gr.Row():
-                    json_btn = gr.Button("📄 JSON Report", variant="secondary")
-                    md_btn = gr.Button("📝 Markdown Report", variant="secondary")
-                    html_btn = gr.Button("🌐 HTML Report", variant="secondary")
+                    json_btn = gr.Button("JSON Report", variant="secondary")
+                    md_btn = gr.Button("Markdown Report", variant="secondary")
+                    html_btn = gr.Button("HTML Report", variant="secondary")
                 
                 report_output = gr.Textbox(
                     label="Generated Report",
@@ -333,7 +333,7 @@ def create_dashboard():
             result = analyze_semgrep_file(file)
             
             if "error" in result:
-                return f"❌ **Error:** {result['error']}", {}
+                return f"**Error:** {result['error']}", {}
             
             # Format results for display
             formatted_results = format_results(result)
@@ -342,7 +342,7 @@ def create_dashboard():
         
         def load_sample_data():
             sample_file = create_sample_data()
-            return sample_file, "📋 Sample data loaded! Click 'Analyze Vulnerabilities' to test.", f"📄 {os.path.basename(sample_file)}"
+            return sample_file, "Sample data loaded! Click 'Analyze Vulnerabilities' to test.", f"{os.path.basename(sample_file)}"
         
         def update_file_info(file):
             if file is None or (isinstance(file, list) and len(file) == 0):
@@ -358,7 +358,7 @@ def create_dashboard():
             else:
                 filename = "Unknown file"
             
-            return f"📄 {filename}"
+            return f"{filename}"
         
         def generate_json_report(data):
             if not data:
@@ -414,20 +414,20 @@ def create_dashboard():
         
         # Instructions
         gr.Markdown("""
-        ## 📖 How to Use
+        ## How to Use
         
         1. **Upload Semgrep Results**: Upload a JSON file from your Semgrep scan
         2. **Analyze**: Click "Analyze Vulnerabilities" to process with Semio
         3. **Review**: View detailed vulnerability analysis and AI-generated fixes
         4. **Generate Reports**: Create JSON, Markdown, or HTML reports
         
-        ## 🧪 Testing
+        ## Testing
         
         Click "Load Sample Data" to test with example vulnerabilities including:
         - Weak cryptographic algorithm (MD5)
         - SQL injection vulnerability
         
-        ## 🔧 Configuration
+        ## Configuration
         
         Make sure your Semio API is running at the specified URL (default: http://localhost:8000)
         """)

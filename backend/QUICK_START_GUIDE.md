@@ -1,6 +1,6 @@
 # Semio Quick Start Guide
 
-## 🚀 **Immediate Steps After Deployment**
+## **Immediate Steps After Deployment**
 
 ### **1. Create Your First Admin Account**
 ```bash
@@ -30,7 +30,7 @@ python semio_cli.py test-connection \
 
 ---
 
-## 📋 **Daily Operations**
+## **Daily Operations**
 
 ### **Create New User Account**
 ```bash
@@ -69,7 +69,7 @@ python api_key_manager.py revoke \
 
 ---
 
-## 🔧 **Common Tasks**
+## **Common Tasks**
 
 ### **Check User Status**
 ```bash
@@ -96,7 +96,7 @@ python api_key_manager.py monitor-usage \
 
 ---
 
-## 🛡️ **Security Checklist**
+## **Security Checklist**
 
 ### **Weekly Tasks**
 - [ ] Review API key usage
@@ -118,7 +118,7 @@ python api_key_manager.py monitor-usage \
 
 ---
 
-## 🚨 **Emergency Procedures**
+## **Emergency Procedures**
 
 ### **API Key Compromise**
 ```bash
@@ -162,7 +162,7 @@ python api_key_manager.py revoke-all-keys \
 
 ---
 
-## 🎯 **Pro Tips**
+## **Pro Tips**
 
 1. **Use Environment Variables**: Never hardcode API keys
 2. **Descriptive Names**: Use clear naming for API keys
