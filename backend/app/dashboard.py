@@ -13,12 +13,29 @@ import gradio as gr
 from datetime import datetime
 
 # Configuration
-DEFAULT_API_URL = "http://localhost:8000"
+DEFAULT_API_URL = "http://localhost:8000"  # Fallback for local development
 API_URL = os.getenv("SEMIO_API_URL", DEFAULT_API_URL)
 
 def get_api_url() -> str:
     """Get API URL from environment or use default."""
-    return os.getenv("SEMIO_API_URL", DEFAULT_API_URL)
+    # For AWS deployment, try to get the instance URL
+    api_url = os.getenv("SEMIO_API_URL")
+    if api_url:
+        return api_url
+    
+    # If no environment variable, try to construct from AWS instance metadata
+    try:
+        import requests
+        # Try to get instance metadata (only works on AWS)
+        response = requests.get("http://169.254.169.254/latest/meta-data/public-hostname", timeout=1)
+        if response.status_code == 200:
+            hostname = response.text.strip()
+            return f"http://{hostname}:8000"
+    except:
+        pass
+    
+    # Fallback to localhost for local development
+    return DEFAULT_API_URL
 
 def analyze_semgrep_file(file) -> Dict[str, Any]:
     """Analyze Semgrep JSON file using Semio API."""
@@ -431,9 +448,17 @@ def create_dashboard():
 if __name__ == "__main__":
     # Create and launch dashboard
     dashboard = create_dashboard()
+    
+    # Get server configuration from environment or use defaults
+    server_host = os.getenv("SEMIO_DASHBOARD_HOST", "0.0.0.0")
+    server_port = int(os.getenv("SEMIO_DASHBOARD_PORT", "7860"))
+    
+    print(f"Starting Semio Dashboard on {server_host}:{server_port}")
+    print(f"API URL: {get_api_url()}")
+    
     dashboard.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
+        server_name=server_host,
+        server_port=server_port,
         share=False,
         show_error=True
     )
