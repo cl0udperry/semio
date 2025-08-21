@@ -388,7 +388,6 @@ def format_results(data: Dict[str, Any]) -> str:
         summary += f"\n## Code Context Analysis\n"
         summary += f"- **Findings with Code:** {code_stats.get('findings_with_code', 0)}\n"
         summary += f"- **Findings without Code:** {code_stats.get('findings_without_code', 0)}\n"
-        summary += f"- **Code Coverage:** {code_stats.get('code_coverage_percentage', 0)}%\n"
     
     # Add Semgrep recommendations
     recommendations = data.get('summary', {}).get('semgrep_recommendations', [])
