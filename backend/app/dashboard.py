@@ -145,6 +145,7 @@ def create_sample_data() -> str:
                 },
                 "extra": {
                     "message": "Found 'subprocess' function 'call' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.",
+                    "lines": "subprocess.call(f\"ls {user_input}\", shell=True)  # Command injection",
                     "fix": "False",
                     "metadata": {
                         "source-rule-url": "https://bandit.readthedocs.io/en/latest/plugins/b602_subprocess_popen_with_shell_equals_true.html",
@@ -203,6 +204,7 @@ def create_sample_data() -> str:
                 },
                 "extra": {
                     "message": "Found 'subprocess' function 'Popen' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.",
+                    "lines": "subprocess.Popen(f\"cat {user_input}\", shell=True)  # Command injection",
                     "fix": "False",
                     "metadata": {
                         "source-rule-url": "https://bandit.readthedocs.io/en/latest/plugins/b602_subprocess_popen_with_shell_equals_true.html",
@@ -260,6 +262,7 @@ def create_sample_data() -> str:
                 },
                 "extra": {
                     "message": "Possible SQL injection. Use parameterized queries instead of string formatting.",
+                    "lines": "query = f\"SELECT * FROM users WHERE id = {user_input}\"",
                     "fix": "False",
                     "metadata": {
                         "category": "security",
@@ -617,8 +620,8 @@ def create_dashboard():
         3. **Review**: View detailed vulnerability analysis and AI-generated fixes
         4. **Generate Reports**: Create JSON, Markdown, or HTML reports
 
-        5. Reach out for a demo on a GitLab pipeline on how to use Semio via CLI to automate the security analysis and fix recommendations.
-        6. (Near) Future enhancements include:
+                 5. **Reach out for a Demo**: Connect with me on [LinkedIn](https://www.linkedin.com/in/jordan-leong-69b57495/) and drop me a message for a demo on a GitLab pipeline on how to use Semio via CLI to automate the security analysis and fix recommendations.
+        6. **(Near) Future enhancements**:
             - False Positive Filtering
             - Implementing of fixes into code for high confidence fixes (with human approval)
         
