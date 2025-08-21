@@ -66,6 +66,17 @@ class AuthService:
     def validate_api_key(api_key: str) -> Optional[dict]:
         """Validate an API key and return user info if valid."""
         try:
+            # Demo API key for testing purposes (only for development/demo)
+            DEMO_API_KEY = "demo-semio-api-key-2024-for-testing-only"
+            if api_key == DEMO_API_KEY:
+                return {
+                    "user_id": "demo-user-id",
+                    "email": "demo@semio.com",
+                    "tier": "free",
+                    "key_name": "demo-key",
+                    "expires_at": None  # Demo key doesn't expire
+                }
+            
             from app.database import SessionLocal
             from app.models.database_models import APIKey, User
             
