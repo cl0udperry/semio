@@ -253,7 +253,7 @@ def create_dashboard():
         gr.Markdown("""
         # Semio - AI-Powered Security Analysis
         
-        Upload your Semgrep JSON results and get intelligent security fix recommendations powered by AI.
+        Upload your Semgrep JSON results and get targeted security code fix recommendations powered by AI.
         """, elem_classes=["main-header"])
         
         with gr.Row():
@@ -271,12 +271,7 @@ def create_dashboard():
                 # Analyze button
                 analyze_btn = gr.Button("Analyze Vulnerabilities", variant="primary", size="lg")
                 
-                # API URL input
-                api_url_input = gr.Textbox(
-                    label="API URL",
-                    value=get_api_url(),
-                    placeholder="http://localhost:8000"
-                )
+
                 
                 # Status
                 status_output = gr.Textbox(
@@ -319,15 +314,12 @@ def create_dashboard():
         current_data = gr.State({})
         
         # Event handlers
-        def analyze_file(file, api_url):
+        def analyze_file(file):
             print(f"Analyze file called with: {file}")
             print(f"File type: {type(file)}")
             
             if file is None or (isinstance(file, list) and len(file) == 0):
                 return "Please upload a Semgrep JSON file", {}
-            
-            # Update API URL
-            os.environ["SEMIO_API_URL"] = api_url
             
             # Analyze file
             result = analyze_semgrep_file(file)
@@ -378,7 +370,7 @@ def create_dashboard():
         # Connect events
         analyze_btn.click(
             analyze_file,
-            inputs=[file_input, api_url_input],
+            inputs=[file_input],
             outputs=[results_output, current_data]
         )
         
@@ -420,17 +412,19 @@ def create_dashboard():
         2. **Analyze**: Click "Analyze Vulnerabilities" to process with Semio
         3. **Review**: View detailed vulnerability analysis and AI-generated fixes
         4. **Generate Reports**: Create JSON, Markdown, or HTML reports
+
+        5. Reach out for a demo on a GitLab pipeline on how to use Semio via CLI to automate the security analysis and fix recommendations.
+        6. (Near) Future enhancements include:
+            - False Positive Filtering
+            - Implementing of fixes into code for high confidence fixes (with human approval)
         
         ## Testing
         
         Click "Load Sample Data" to test with example vulnerabilities including:
         - Weak cryptographic algorithm (MD5)
         - SQL injection vulnerability
-        
-        ## Configuration
-        
-        Make sure your Semio API is running at the specified URL (default: http://localhost:8000)
         """)
+        
     
     return dashboard
 
