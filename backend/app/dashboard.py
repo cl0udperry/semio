@@ -128,32 +128,220 @@ def generate_report(data: Dict[str, Any], format_type: str) -> str:
 def create_sample_data() -> str:
     """Create sample Semgrep JSON data for testing."""
     sample_data = {
+        "version": "1.131.0",
         "results": [
             {
-                "check_id": "python.weak-crypto",
-                "path": "auth.py",
-                "start": {"line": 8},
-                "end": {"line": 8},
+                "check_id": "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
+                "path": "test-files/test.py",
+                "start": {
+                    "line": 11,
+                    "col": 47,
+                    "offset": 336
+                },
+                "end": {
+                    "line": 11,
+                    "col": 51,
+                    "offset": 340
+                },
                 "extra": {
-                    "lines": "password_hash = hashlib.md5(password).hexdigest()",
-                    "message": "Weak cryptographic algorithm used",
-                    "severity": "HIGH",
-                    "description": "MD5 is cryptographically broken and unsuitable for password storage"
+                    "message": "Found 'subprocess' function 'call' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.",
+                    "fix": "False",
+                    "metadata": {
+                        "source-rule-url": "https://bandit.readthedocs.io/en/latest/plugins/b602_subprocess_popen_with_shell_equals_true.html",
+                        "owasp": [
+                            "A01:2017 - Injection",
+                            "A03:2021 - Injection"
+                        ],
+                        "cwe": [
+                            "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')"
+                        ],
+                        "category": "security",
+                        "technology": [
+                            "python"
+                        ],
+                        "likelihood": "HIGH",
+                        "impact": "LOW",
+                        "confidence": "MEDIUM",
+                        "vulnerability_class": [
+                            "Command Injection"
+                        ]
+                    },
+                    "severity": "ERROR",
+                    "fingerprint": "sample-fingerprint-1"
+                },
+                "start_line": 11,
+                "end_line": 11,
+                "source_code": {
+                    "file_path": "test-files/test.py",
+                    "start_line": 11,
+                    "end_line": 11,
+                    "vulnerable_lines": [
+                        "    6: ",
+                        "    7: def vulnerable_function(user_input):",
+                        "    8:     # SQL Injection vulnerability",
+                        "    9:     query = f\"SELECT * FROM users WHERE id = {user_input}\"",
+                        "   10:     os.system(f\"echo {user_input}\")  # Command injection",
+                        "   11:     subprocess.call(f\"ls {user_input}\", shell=True)  # Command injection",
+                        "   12:     subprocess.Popen(f\"cat {user_input}\", shell=True)  # Command injection",
+                        "   13:     return query"
+                    ],
+                    "context_lines": 5
                 }
             },
             {
-                "check_id": "python.sql-injection",
-                "path": "database.py",
-                "start": {"line": 15},
-                "end": {"line": 15},
+                "check_id": "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
+                "path": "test-files/test.py",
+                "start": {
+                    "line": 12,
+                    "col": 49,
+                    "offset": 411
+                },
+                "end": {
+                    "line": 12,
+                    "col": 53,
+                    "offset": 415
+                },
                 "extra": {
-                    "lines": "query = \"SELECT * FROM users WHERE id = \" + user_input",
-                    "message": "SQL injection vulnerability detected",
-                    "severity": "CRITICAL",
-                    "description": "User input is directly concatenated into SQL query"
+                    "message": "Found 'subprocess' function 'Popen' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.",
+                    "fix": "False",
+                    "metadata": {
+                        "source-rule-url": "https://bandit.readthedocs.io/en/latest/plugins/b602_subprocess_popen_with_shell_equals_true.html",
+                        "owasp": [
+                            "A01:2017 - Injection",
+                            "A03:2021 - Injection"
+                        ],
+                        "cwe": [
+                            "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')"
+                        ],
+                        "category": "security",
+                        "technology": [
+                            "python"
+                        ],
+                        "likelihood": "HIGH",
+                        "impact": "LOW",
+                        "confidence": "MEDIUM",
+                        "vulnerability_class": [
+                            "Command Injection"
+                        ]
+                    },
+                    "severity": "ERROR",
+                    "fingerprint": "sample-fingerprint-2"
+                },
+                "start_line": 12,
+                "end_line": 12,
+                "source_code": {
+                    "file_path": "test-files/test.py",
+                    "start_line": 12,
+                    "end_line": 12,
+                    "vulnerable_lines": [
+                        "    7: def vulnerable_function(user_input):",
+                        "    8:     # SQL Injection vulnerability",
+                        "    9:     query = f\"SELECT * FROM users WHERE id = {user_input}\"",
+                        "   10:     os.system(f\"echo {user_input}\")  # Command injection",
+                        "   11:     subprocess.call(f\"ls {user_input}\", shell=True)  # Command injection",
+                        "   12:     subprocess.Popen(f\"cat {user_input}\", shell=True)  # Command injection",
+                        "   13:     return query"
+                    ],
+                    "context_lines": 5
+                }
+            },
+            {
+                "check_id": "python.lang.security.audit.sql-injection.sql-injection",
+                "path": "test-files/test.py",
+                "start": {
+                    "line": 9,
+                    "col": 15,
+                    "offset": 280
+                },
+                "end": {
+                    "line": 9,
+                    "col": 45,
+                    "offset": 310
+                },
+                "extra": {
+                    "message": "Possible SQL injection. Use parameterized queries instead of string formatting.",
+                    "fix": "False",
+                    "metadata": {
+                        "category": "security",
+                        "technology": [
+                            "python"
+                        ],
+                        "likelihood": "HIGH",
+                        "impact": "HIGH",
+                        "confidence": "MEDIUM",
+                        "vulnerability_class": [
+                            "SQL Injection"
+                        ]
+                    },
+                    "severity": "WARNING",
+                    "fingerprint": "sample-fingerprint-3"
+                },
+                "start_line": 9,
+                "end_line": 9,
+                "source_code": {
+                    "file_path": "test-files/test.py",
+                    "start_line": 9,
+                    "end_line": 9,
+                    "vulnerable_lines": [
+                        "    7: def vulnerable_function(user_input):",
+                        "    8:     # SQL Injection vulnerability",
+                        "    9:     query = f\"SELECT * FROM users WHERE id = {user_input}\"",
+                        "   10:     os.system(f\"echo {user_input}\")  # Command injection",
+                        "   11:     subprocess.call(f\"ls {user_input}\", shell=True)  # Command injection"
+                    ],
+                    "context_lines": 5
                 }
             }
-        ]
+        ],
+        "errors": [],
+        "paths": {
+            "scanned": [
+                "test-files/test.py"
+            ]
+        },
+        "time": {
+            "rules": [],
+            "rules_parse_time": 0.29289722442626953,
+            "profiling_times": {
+                "config_time": 1.4812743663787842,
+                "core_time": 0.7768964767456055,
+                "ignores_time": 0.0004923343658447266,
+                "total_time": 2.259347915649414
+            },
+            "parsing_time": {
+                "total_time": 0.009083032608032227,
+                "per_file_time": {
+                    "mean": 0.009083032608032227,
+                    "std_dev": 0.0
+                }
+            },
+            "scanning_time": {
+                "total_time": 0.026292085647583008,
+                "per_file_time": {
+                    "mean": 0.013146042823791504,
+                    "std_dev": 0.00015485658367708766
+                }
+            },
+            "matching_time": {
+                "total_time": 0.004363059997558594,
+                "per_file_and_rule_time": {
+                    "mean": 0.0008726119995117188,
+                    "std_dev": 2.299781453984906e-06
+                }
+            },
+            "tainting_time": {
+                "total_time": 0.0007297992706298828,
+                "per_def_and_rule_time": {
+                    "mean": 0.00024326642354329428,
+                    "std_dev": 5.105347453435468e-09
+                }
+            },
+            "targets": [],
+            "total_bytes": 0,
+            "max_memory_bytes": 265479552
+        },
+        "engine_requested": "OSS",
+        "skipped_rules": []
     }
     
     # Create temporary file
@@ -438,7 +626,7 @@ def create_dashboard():
         ## Testing
         
         Click "Load Sample Data" to test with example vulnerabilities including:
-        - Weak cryptographic algorithm (MD5)
+        - Command injection vulnerabilities (subprocess with shell=True)
         - SQL injection vulnerability
         """)
         
