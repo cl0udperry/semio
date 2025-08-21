@@ -619,8 +619,7 @@ def create_dashboard():
         2. **Analyze**: Click "Analyze Vulnerabilities" to process with Semio
         3. **Review**: View detailed vulnerability analysis and AI-generated fixes
         4. **Generate Reports**: Create JSON, Markdown, or HTML reports
-
-                 5. **Reach out for a Demo**: Connect with me on [LinkedIn](https://www.linkedin.com/in/jordan-leong-69b57495/) and drop me a message for a demo on a GitLab pipeline on how to use Semio via CLI to automate the security analysis and fix recommendations.
+        5. **Reach out for a Demo**: Connect with me on [LinkedIn](https://www.linkedin.com/in/jordan-leong-69b57495/) and drop me a message for a demo on a GitLab pipeline on how to use Semio via CLI to automate the security analysis and fix recommendations.
         6. **(Near) Future enhancements**:
             - False Positive Filtering
             - Implementing of fixes into code for high confidence fixes (with human approval)
