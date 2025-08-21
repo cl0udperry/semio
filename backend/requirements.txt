@@ -14,3 +14,6 @@ markdown==3.5.1
 # Additional dependencies for full functionality
 openai==1.3.0
 httpx==0.25.0
+# Admin interface dependencies
+flask==3.0.0
+flask-login==0.6.3
