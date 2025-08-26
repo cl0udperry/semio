@@ -66,9 +66,10 @@ class AuthService:
     def validate_api_key(api_key: str) -> Optional[dict]:
         """Validate an API key and return user info if valid."""
         try:
-            # Demo API key for testing purposes (only for development/demo)
-            DEMO_API_KEY = "demo-semio-api-key-2024-for-testing-only"
-            if api_key == DEMO_API_KEY:
+            # Demo API key from environment variable (for testing purposes)
+            # Set DEMO_API_KEY environment variable for demo access
+            demo_api_key = os.getenv('DEMO_API_KEY')
+            if demo_api_key and api_key == demo_api_key:
                 return {
                     "user_id": "demo-user-id",
                     "email": "demo@semio.com",

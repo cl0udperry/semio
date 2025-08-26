@@ -13,13 +13,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database configuration
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://semio_user:semio_password@localhost:5432/semio_db"
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # For development/testing, you can use SQLite
-if os.getenv("USE_SQLITE", "true").lower() == "true":
+USE_SQLITE = os.getenv("USE_SQLITE", "true").lower() == "true"
+
+if USE_SQLITE:
     DATABASE_URL = "sqlite:///./semio.db"
     engine = create_engine(
         DATABASE_URL,
@@ -28,13 +27,19 @@ if os.getenv("USE_SQLITE", "true").lower() == "true":
     )
 else:
     # PostgreSQL configuration with connection pooling
+    if not DATABASE_URL:
+        raise ValueError(
+            "DATABASE_URL environment variable must be set for PostgreSQL. "
+            "Format: postgresql://user:password@host:port/database"
+        )
+    
     engine = create_engine(
         DATABASE_URL,
-        pool_size=10,  # Number of connections to maintain
-        max_overflow=20,  # Additional connections when pool is full
-        pool_pre_ping=True,  # Validate connections before use
-        pool_recycle=3600,  # Recycle connections after 1 hour
-        echo=os.getenv("SQL_ECHO", "false").lower() == "true"  # SQL logging
+        pool_size=int(os.getenv("DB_POOL_SIZE", "10")),
+        max_overflow=int(os.getenv("DB_MAX_OVERFLOW", "20")),
+        pool_pre_ping=True,
+        pool_recycle=int(os.getenv("DB_POOL_RECYCLE", "3600")),
+        echo=os.getenv("SQL_ECHO", "false").lower() == "true"
     )
 
 # Session factory

@@ -30,9 +30,17 @@ class AdminUser(UserMixin):
     def __init__(self, username):
         self.id = username
 
-# Admin credentials (should be set via environment variables)
-ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
+# Admin credentials (MUST be set via environment variables)
+# These environment variables are REQUIRED for security
+ADMIN_USERNAME = os.getenv('ADMIN_USERNAME')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
+
+# Validate that admin credentials are set
+if not ADMIN_USERNAME or not ADMIN_PASSWORD:
+    raise ValueError(
+        "ADMIN_USERNAME and ADMIN_PASSWORD environment variables must be set. "
+        "Please configure these in your AWS environment variables."
+    )
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -358,7 +366,7 @@ DASHBOARD_TEMPLATE = """
 
         <div class="section">
             <h2>Demo API Key Information</h2>
-            <p><strong>Demo API Key:</strong> demo-semio-api-key-2024-for-testing-only</p>
+            <p><strong>Demo API Key:</strong> Set via DEMO_API_KEY environment variable</p>
             <p><strong>Purpose:</strong> Testing and demo only</p>
             <p><strong>Access:</strong> Free tier</p>
             <p><strong>Expiration:</strong> Never expires</p>

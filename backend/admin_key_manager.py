@@ -331,7 +331,8 @@ def main():
         
         elif choice == "8":
             print("\n--- Demo API Key Information ---")
-            print("Demo API Key: demo-semio-api-key-2024-for-testing-only")
+            demo_key = os.getenv('DEMO_API_KEY', 'Not set')
+        print(f"Demo API Key: {demo_key}")
             print("Purpose: Testing and demo only")
             print("Access: Free tier")
             print("Expiration: Never expires")

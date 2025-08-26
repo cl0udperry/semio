@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from app.routes.scan import router as scan_router
 from app.routes.review import router as review_router
 from app.routes.auth import router as auth_router
@@ -80,9 +81,12 @@ async def startup_event():
     """Initialize database on startup."""
     init_db()
 
+from fastapi.responses import RedirectResponse
+
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Semio API"}
+    """Redirect root to dashboard."""
+    return RedirectResponse(url="/dashboard", status_code=302)
 
 @app.get("/health")
 async def health_check():
