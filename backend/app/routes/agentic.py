@@ -2,7 +2,7 @@
 Agentic AI API endpoints for Semio
 """
 
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Query
 from fastapi.responses import JSONResponse
 from typing import Dict, List, Optional
 import json
@@ -12,7 +12,7 @@ from app.services.agentic_core import SemioAgenticCore
 from app.services.agentic_types import AgentDecision
 from app.models.user import UserTier
 from app.services.tier_service import TierService
-from app.services.auth_service import get_current_user
+from app.services.auth_service import get_current_user, get_current_user_by_api_key_header
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +159,164 @@ async def analyze_json_with_agentic_ai(
     except Exception as e:
         logger.error(f"Agentic analysis error: {e}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@router.post("/agentic/analyze-json-cli")
+async def analyze_json_with_agentic_ai_cli(
+    semgrep_data: Dict,
+    auto_fix_threshold: float = 0.9,
+    suppress_threshold: float = 0.8,
+    api_key: str = Query(None, description="API key for CLI access (deprecated, use Authorization header)"),
+    authorization: str = Depends(get_current_user)
+):
+    """
+    CLI-specific endpoint for agentic AI analysis
+    
+    Args:
+        semgrep_data: Raw Semgrep JSON data
+        auto_fix_threshold: Confidence threshold for automatic fixes
+        suppress_threshold: Confidence threshold for suppression
+        api_key: API key for CLI access
+        
+    Returns:
+        Agentic analysis results with intelligent decisions
+    """
+    try:
+        # Validate API key
+        from app.services.auth_service import AuthService
+        user_info = AuthService.validate_api_key(api_key)
+        if not user_info:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or expired API key. Please provide a valid API key for CLI access."
+            )
+        
+        # Process with agentic AI
+        decisions = agentic_core.process_semgrep_findings(
+            semgrep_data, auto_fix_threshold, suppress_threshold
+        )
+        
+        # Convert decisions to JSON-serializable format
+        decisions_json = []
+        for decision in decisions:
+            decisions_json.append({
+                'finding_id': decision.finding_id,
+                'file_path': decision.file_path,
+                'line_number': decision.line_number,
+                'rule_id': decision.rule_id,
+                'action': decision.action.value,
+                'confidence': decision.confidence,
+                'fp_likelihood': decision.fp_likelihood,
+                'fix_confidence': decision.fix_confidence,
+                'original_code': decision.original_code,
+                'suggested_fix': decision.suggested_fix,
+                'explanation': decision.explanation,
+                'metadata': decision.metadata
+            })
+        
+        return {
+            'success': True,
+            'decisions': decisions_json,
+            'total_findings': len(decisions),
+            'action_summary': _summarize_actions(decisions),
+            'thresholds': {
+                'auto_fix_threshold': auto_fix_threshold,
+                'suppress_threshold': suppress_threshold
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Agentic analysis error: {e}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@router.post("/agentic/analyze-json-secure")
+async def analyze_json_with_agentic_ai_secure(
+    semgrep_data: Dict,
+    auto_fix_threshold: float = 0.9,
+    suppress_threshold: float = 0.8,
+    current_user = Depends(get_current_user_by_api_key_header)
+):
+    """
+    Secure endpoint for agentic AI analysis using Authorization header
+    
+    Args:
+        semgrep_data: Raw Semgrep JSON data
+        auto_fix_threshold: Confidence threshold for automatic fixes
+        suppress_threshold: Confidence threshold for suppression
+        current_user: Authenticated user (from Authorization header)
+        
+    Returns:
+        Agentic analysis results with intelligent decisions
+    """
+    try:
+        # Check tier permissions
+        if not TierService.can_use_agentic_ai(current_user.tier):
+            raise HTTPException(
+                status_code=403,
+                detail="Agentic AI features require Pro or Enterprise tier"
+            )
+        
+        # Process with agentic AI
+        decisions = agentic_core.process_semgrep_findings(
+            semgrep_data, auto_fix_threshold, suppress_threshold
+        )
+        
+        # Convert decisions to JSON-serializable format
+        decisions_json = []
+        for decision in decisions:
+            decisions_json.append({
+                'finding_id': decision.finding_id,
+                'file_path': decision.file_path,
+                'line_number': decision.line_number,
+                'rule_id': decision.rule_id,
+                'action': decision.action.value,
+                'confidence': decision.confidence,
+                'fp_likelihood': decision.fp_likelihood,
+                'fix_confidence': decision.fix_confidence,
+                'original_code': decision.original_code,
+                'suggested_fix': decision.suggested_fix,
+                'explanation': decision.explanation,
+                'metadata': decision.metadata
+            })
+        
+        return {
+            'success': True,
+            'decisions': decisions_json,
+            'total_findings': len(decisions),
+            'action_summary': _summarize_actions(decisions),
+            'thresholds': {
+                'auto_fix_threshold': auto_fix_threshold,
+                'suppress_threshold': suppress_threshold
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Agentic analysis error: {e}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@router.get("/agentic/stats-cli")
+async def get_agentic_stats_cli(api_key: str = Query(..., description="API key for CLI access")):
+    """
+    CLI-specific endpoint for agentic AI statistics
+    """
+    try:
+        # Validate API key
+        from app.services.auth_service import AuthService
+        user_info = AuthService.validate_api_key(api_key)
+        if not user_info:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or expired API key. Please provide a valid API key for CLI access."
+            )
+        
+        stats = agentic_core.get_agent_stats()
+        return {
+            'success': True,
+            'stats': stats
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting agentic stats: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get stats: {str(e)}")
 
 @router.get("/agentic/stats")
 async def get_agentic_stats(current_user = Depends(get_current_user)):

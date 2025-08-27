@@ -322,27 +322,33 @@ class AuthService:
 
 # Dependency functions for FastAPI
 def get_current_user(
-    token: str,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ) -> User:
-    """Get current user from JWT token."""
-    payload = AuthService.verify_token(token)
-    user_id = payload.get("sub")
-    
-    if user_id is None:
+    """Get current user from JWT token in Authorization header."""
+    try:
+        payload = AuthService.verify_token(credentials.credentials)
+        user_id = payload.get("sub")
+        
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials"
+            )
+        
+        user = AuthService.get_user_by_id(db, user_id)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found"
+            )
+        
+        return user
+    except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials"
         )
-    
-    user = AuthService.get_user_by_id(db, user_id)
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
-        )
-    
-    return user
 
 
 def get_current_user_by_api_key(
@@ -358,6 +364,39 @@ def get_current_user_by_api_key(
         )
     
     return user
+
+
+def get_current_user_by_api_key_header(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+) -> User:
+    """Get current user from API key in Authorization header."""
+    try:
+        # Extract API key from Bearer token
+        api_key = credentials.credentials
+        
+        # Validate API key
+        user_info = AuthService.validate_api_key(api_key)
+        if not user_info:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired API key"
+            )
+        
+        # Get user from database
+        user = AuthService.get_user_by_id(db, user_info["user_id"])
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found"
+            )
+        
+        return user
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key"
+        )
 
 
 # Database dependency is imported from app.database
