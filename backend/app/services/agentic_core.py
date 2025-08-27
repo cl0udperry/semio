@@ -5,8 +5,6 @@ Semio Agentic AI Core - Orchestrates intelligent vulnerability analysis and deci
 import json
 import logging
 from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass
-from enum import Enum
 import ast
 import re
 
@@ -16,33 +14,11 @@ from .false_positive_filter import FalsePositiveFilter
 from .fix_validator import FixValidator
 from .decision_engine import DecisionEngine
 from .memory_store import MemoryStore
+from .agentic_types import ActionType, AgentDecision
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-class ActionType(Enum):
-    """Possible actions the agent can take"""
-    SUPPRESS = "suppress"
-    SUGGEST = "suggest"
-    AUTO_FIX = "auto_fix"
-    MANUAL_REVIEW = "manual_review"
-
-@dataclass
-class AgentDecision:
-    """Structured decision output from the agentic system"""
-    finding_id: str
-    file_path: str
-    line_number: int
-    rule_id: str
-    action: ActionType
-    confidence: float
-    fp_likelihood: float
-    fix_confidence: float
-    original_code: str
-    suggested_fix: Optional[str]
-    explanation: str
-    metadata: Dict
 
 class SemioAgenticCore:
     """

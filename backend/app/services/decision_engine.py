@@ -7,7 +7,7 @@ from typing import Dict, Tuple
 from enum import Enum
 from dataclasses import dataclass
 
-from .agentic_core import ActionType
+from .agentic_types import ActionType
 
 logger = logging.getLogger(__name__)
 

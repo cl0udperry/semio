@@ -8,7 +8,8 @@ from typing import Dict, List, Optional
 import json
 import logging
 
-from app.services.agentic_core import SemioAgenticCore, AgentDecision
+from app.services.agentic_core import SemioAgenticCore
+from app.services.agentic_types import AgentDecision
 from app.models.user import UserTier
 from app.services.tier_service import TierService
 from app.services.auth_service import get_current_user

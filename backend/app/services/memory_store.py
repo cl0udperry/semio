@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
 import hashlib
 
-from .agentic_core import AgentDecision, ActionType
+from .agentic_types import AgentDecision, ActionType
 
 logger = logging.getLogger(__name__)
 
