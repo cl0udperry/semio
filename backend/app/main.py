@@ -12,7 +12,13 @@ app = FastAPI(title="Semio API", version="1.0.0")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=[
+        "https://semio-ai.com",
+        "http://semio-ai.com",
+        "https://www.semio-ai.com",
+        "http://www.semio-ai.com",
+        "https://semio-production.eba-di323hkd.ap-southeast-1.elasticbeanstalk.com"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -75,6 +81,10 @@ async def rate_limit_middleware_wrapper(request: Request, call_next):
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(scan_router, prefix="/api", tags=["API"])
 app.include_router(review_router, prefix="/api", tags=["API"])
+
+# Import and include agentic AI router
+from app.routes.agentic import router as agentic_router
+app.include_router(agentic_router, prefix="/api", tags=["Agentic AI"])
 
 @app.on_event("startup")
 async def startup_event():

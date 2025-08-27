@@ -95,3 +95,9 @@ class TierService:
         """Check if tier has priority queue access."""
         config = cls.get_tier_config(tier)
         return config["priority_queue"]
+    
+    @classmethod
+    def can_use_agentic_ai(cls, tier: UserTier) -> bool:
+        """Check if tier allows access to agentic AI features."""
+        # Pro and Enterprise tiers can use agentic AI
+        return tier in [UserTier.PRO, UserTier.ENTERPRISE]
