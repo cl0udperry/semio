@@ -383,7 +383,21 @@ def get_current_user_by_api_key_header(
                 detail="Invalid or expired API key"
             )
         
-        # Get user from database
+        # Handle demo user case
+        if user_info["user_id"] == "demo-user-id":
+            # Create a demo user object for demo API key
+            from app.models.user import UserTier
+            demo_user = User(
+                id="demo-user-id",
+                email="demo@semio.com",
+                tier=UserTier.FREE,
+                is_active=True,
+                monthly_limit=100,
+                monthly_requests=0
+            )
+            return demo_user
+        
+        # Get user from database for real users
         user = AuthService.get_user_by_id(db, user_info["user_id"])
         if user is None:
             raise HTTPException(
@@ -392,7 +406,8 @@ def get_current_user_by_api_key_header(
             )
         
         return user
-    except Exception:
+    except Exception as e:
+        print(f"Error in get_current_user_by_api_key_header: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API key"
