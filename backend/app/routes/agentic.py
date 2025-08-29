@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from typing import Dict, List, Optional
 import json
 import logging
+import traceback
 
 from app.services.agentic_core import SemioAgenticCore
 from app.services.agentic_types import AgentDecision
@@ -17,7 +18,14 @@ from app.services.auth_service import get_current_user, get_current_user_by_api_
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-agentic_core = SemioAgenticCore()
+
+# Initialize agentic core with error handling
+try:
+    agentic_core = SemioAgenticCore()
+    logger.info("Agentic core initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize agentic core: {e}")
+    agentic_core = None
 
 @router.post("/agentic/analyze")
 async def analyze_with_agentic_ai(
@@ -248,6 +256,13 @@ async def analyze_json_with_agentic_ai_secure(
         Agentic analysis results with intelligent decisions
     """
     try:
+        # Check if agentic core is available
+        if agentic_core is None:
+            raise HTTPException(
+                status_code=500,
+                detail="Agentic AI system is not available. Please check server configuration."
+            )
+        
         # Check tier permissions
         if not TierService.can_use_agentic_ai(current_user.tier):
             raise HTTPException(
@@ -290,7 +305,9 @@ async def analyze_json_with_agentic_ai_secure(
         }
         
     except Exception as e:
+        error_traceback = traceback.format_exc()
         logger.error(f"Agentic analysis error: {e}")
+        logger.error(f"Full traceback: {error_traceback}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 @router.get("/agentic/stats-cli")
