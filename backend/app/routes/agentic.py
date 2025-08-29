@@ -19,13 +19,23 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Initialize agentic core with error handling
-try:
-    agentic_core = SemioAgenticCore()
-    logger.info("Agentic core initialized successfully")
-except Exception as e:
-    logger.error(f"Failed to initialize agentic core: {e}")
-    agentic_core = None
+# Global variable for agentic core (will be initialized on first use)
+agentic_core = None
+
+def get_agentic_core():
+    """Get or initialize the agentic core"""
+    global agentic_core
+    if agentic_core is None:
+        try:
+            agentic_core = SemioAgenticCore()
+            logger.info("Agentic core initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize agentic core: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Agentic AI system initialization failed: {str(e)}"
+            )
+    return agentic_core
 
 @router.post("/agentic/analyze")
 async def analyze_with_agentic_ai(
@@ -256,13 +266,6 @@ async def analyze_json_with_agentic_ai_secure(
         Agentic analysis results with intelligent decisions
     """
     try:
-        # Check if agentic core is available
-        if agentic_core is None:
-            raise HTTPException(
-                status_code=500,
-                detail="Agentic AI system is not available. Please check server configuration."
-            )
-        
         # Check tier permissions
         if not TierService.can_use_agentic_ai(current_user.tier):
             raise HTTPException(
@@ -270,8 +273,11 @@ async def analyze_json_with_agentic_ai_secure(
                 detail="Agentic AI features require Pro or Enterprise tier"
             )
         
+        # Get or initialize agentic core
+        core = get_agentic_core()
+        
         # Process with agentic AI
-        decisions = agentic_core.process_semgrep_findings(
+        decisions = core.process_semgrep_findings(
             semgrep_data, auto_fix_threshold, suppress_threshold
         )
         
