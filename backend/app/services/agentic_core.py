@@ -89,22 +89,27 @@ class SemioAgenticCore:
         suggested_fix = None
         
         if fp_score < suppress_threshold:
-            # Generate fix using existing LLM recommender
-            fixes = generate_fixes([finding])
-            if fixes and len(fixes) > 0:
-                fix_data = fixes[0]
-                suggested_fix = fix_data.get('suggested_fix')
-                fix_confidence = fix_data.get('confidence_score', 0.0)
-                
-                # Step 4: Validate the fix
-                if suggested_fix:
-                    validation_result = self.fix_validator.validate_fix(
-                        finding, suggested_fix
-                    )
-                    # Adjust confidence based on validation
-                    if not validation_result.is_valid:
-                        fix_confidence *= 0.7  # Reduce confidence for invalid fixes
-                        logger.warning(f"Fix validation failed for {finding_id}: {validation_result.errors}")
+            # Generate fix using existing LLM recommender (same as old endpoints)
+            try:
+                fixes = generate_fixes([finding], tier="FREE")  # Use FREE tier for demo
+                if fixes and len(fixes) > 0:
+                    fix_data = fixes[0]
+                    suggested_fix = fix_data.get('suggested_fix')
+                    fix_confidence = fix_data.get('confidence_score', 0.0)
+                    
+                    # Step 4: Validate the fix
+                    if suggested_fix:
+                        validation_result = self.fix_validator.validate_fix(
+                            finding, suggested_fix
+                        )
+                        # Adjust confidence based on validation
+                        if not validation_result.is_valid:
+                            fix_confidence *= 0.7  # Reduce confidence for invalid fixes
+                            logger.warning(f"Fix validation failed for {finding_id}: {validation_result.errors}")
+            except Exception as e:
+                logger.error(f"Error generating fix for {finding_id}: {e}")
+                suggested_fix = None
+                fix_confidence = 0.0
         
         # Step 5: Risk-aware decision making
         decision_data = {
