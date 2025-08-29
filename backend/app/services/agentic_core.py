@@ -15,6 +15,7 @@ from .fix_validator import FixValidator
 from .decision_engine import DecisionEngine
 from .memory_store import MemoryStore
 from .agentic_types import ActionType, AgentDecision
+from ..models.user import UserTier
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -91,7 +92,7 @@ class SemioAgenticCore:
         if fp_score < suppress_threshold:
             # Generate fix using existing LLM recommender (same as old endpoints)
             try:
-                fixes = generate_fixes([finding], tier="FREE")  # Use FREE tier for demo
+                fixes = generate_fixes([finding], tier=UserTier.FREE)  # Use FREE tier for demo
                 if fixes and len(fixes) > 0:
                     fix_data = fixes[0]
                     suggested_fix = fix_data.get('suggested_fix')
