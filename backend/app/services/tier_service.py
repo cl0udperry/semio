@@ -99,5 +99,5 @@ class TierService:
     @classmethod
     def can_use_agentic_ai(cls, tier: UserTier) -> bool:
         """Check if tier allows access to agentic AI features."""
-        # Pro and Enterprise tiers can use agentic AI
-        return tier in [UserTier.PRO, UserTier.ENTERPRISE]
+        # Allow all tiers to use agentic AI for demo purposes
+        return tier in [UserTier.FREE, UserTier.PRO, UserTier.ENTERPRISE]
