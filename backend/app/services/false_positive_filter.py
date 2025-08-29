@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import logging
 
 from .llm_recommender import get_llm_client
-from app.models.user import UserTier
+from ..models.user import UserTier
 
 logger = logging.getLogger(__name__)
 

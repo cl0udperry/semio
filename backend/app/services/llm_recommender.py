@@ -3,9 +3,9 @@ import json
 from openai import OpenAI
 from dotenv import load_dotenv
 import httpx
-from app.services.semgrep_parser import extract_context_for_fix
-from app.models.user import UserTier
-from app.services.tier_service import TierService
+from .semgrep_parser import extract_context_for_fix
+from ..models.user import UserTier
+from .tier_service import TierService
 
 load_dotenv()
 

@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from app.models.user import UserTier
+from ..models.user import UserTier
 
 class TierService:
     """Service to manage tier-specific features and limits."""
