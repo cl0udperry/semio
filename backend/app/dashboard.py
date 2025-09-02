@@ -856,23 +856,6 @@ def create_dashboard():
                     value=""
                 )
         
-        # Report generation section
-        with gr.Row():
-            gr.HTML('<div class="section-header">Generate Reports</div>')
-        
-        with gr.Row():
-            with gr.Column():
-                with gr.Row():
-                    json_btn = gr.Button("JSON Report", elem_classes=["secondary-button"])
-                    md_btn = gr.Button("Markdown Report", elem_classes=["secondary-button"])
-                    html_btn = gr.Button("HTML Report", elem_classes=["secondary-button"])
-                
-                report_output = gr.Textbox(
-                    label="Generated Report",
-                    lines=10,
-                    value="Click a report button to generate..."
-                )
-        
         # Store current analysis data
         current_data = gr.State({})
         
@@ -928,8 +911,8 @@ For real vulnerabilities, sem.io generates intelligent fixes:
 
 ---
 
-## Analysis Results (Exact CLI Format)
-Below is the exact report format that sem.io CLI returns in your pipeline:
+## Analysis Results
+Below are the detailed analysis results:
 
 """
             
@@ -961,21 +944,6 @@ Below is the exact report format that sem.io CLI returns in your pipeline:
             
             return f"{filename}"
         
-        def generate_json_report(data):
-            if not data:
-                return "No analysis data available. Please analyze a file first."
-            return json.dumps(data, indent=2)
-        
-        def generate_markdown_report(data):
-            if not data:
-                return "No analysis data available. Please analyze a file first."
-            return generate_report(data, "markdown")
-        
-        def generate_html_report(data):
-            if not data:
-                return "No analysis data available. Please analyze a file first."
-            return generate_report(data, "html")
-        
         # Connect events
         analyze_btn.click(
             analyze_file,
@@ -995,24 +963,6 @@ Below is the exact report format that sem.io CLI returns in your pipeline:
             outputs=[file_info]
         )
         
-        json_btn.click(
-            generate_json_report,
-            inputs=[current_data],
-            outputs=[report_output]
-        )
-        
-        md_btn.click(
-            generate_markdown_report,
-            inputs=[current_data],
-            outputs=[report_output]
-        )
-        
-        html_btn.click(
-            generate_html_report,
-            inputs=[current_data],
-            outputs=[report_output]
-        )
-        
         # Instructions
         gr.HTML("""
         <div class="main-content" style="margin-top: 2rem;">
@@ -1022,9 +972,8 @@ Below is the exact report format that sem.io CLI returns in your pipeline:
                 <p><strong>1. Upload Semgrep Results:</strong> Upload a JSON file from your Semgrep scan</p>
                 <p><strong>2. Analyze:</strong> Click "Analyze Vulnerabilities" to process with sem.io</p>
                 <p><strong>3. Review:</strong> View detailed vulnerability analysis and AI-generated fixes</p>
-                <p><strong>4. Generate Reports:</strong> Create JSON, Markdown, or HTML reports</p>
-                <p><strong>5. Reach out for a Demo:</strong> Connect with me on <a href="https://www.linkedin.com/in/jordan-leong-69b57495/" target="_blank" style="color: #667eea; text-decoration: none;">LinkedIn</a> and drop me a message for a demo on a GitLab pipeline on how to use sem.io via CLI to automate the security analysis and fix recommendations.</p>
-                <p><strong>6. (Near) Future enhancements:</strong></p>
+                <p><strong>4. Reach out for a Demo:</strong> Connect with me on <a href="https://www.linkedin.com/in/jordan-leong-69b57495/" target="_blank" style="color: #667eea; text-decoration: none;">LinkedIn</a> and drop me a message for a demo on a GitLab pipeline on how to use sem.io via CLI to automate the security analysis and fix recommendations.</p>
+                <p><strong>5. (Near) Future enhancements:</strong></p>
                 <ul style="margin-left: 2rem; margin-top: 0.5rem;">
                     <li>False Positive Filtering</li>
                     <li>Implementation of fixes into code for high confidence fixes (with human approval)</li>
