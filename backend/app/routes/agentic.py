@@ -9,6 +9,7 @@ from datetime import datetime
 import json
 import logging
 import traceback
+from typing import Any
 
 from app.services.agentic_core import SemioAgenticCore
 from app.services.agentic_types import AgentDecision
@@ -214,9 +215,19 @@ async def analyze_json_with_agentic_ai_cli(
             semgrep_data, auto_fix_threshold, suppress_threshold
         )
         
-        # Convert decisions to JSON-serializable format
+        # Convert decisions to JSON-serializable format with enhanced false positive details
         decisions_json = []
         for decision in decisions:
+            # Get detailed false positive analysis
+            fp_analysis = None
+            if hasattr(decision, 'validation_details'):
+                fp_analysis = {
+                    'is_likely_false_positive': decision.fp_likelihood > 0.7,
+                    'confidence_score': decision.fp_likelihood,
+                    'validation_details': decision.validation_details,
+                    'reasoning': _generate_agentic_fp_reasoning(decision.validation_details, decision)
+                }
+            
             decisions_json.append({
                 'finding_id': decision.finding_id,
                 'file_path': decision.file_path,
@@ -229,7 +240,8 @@ async def analyze_json_with_agentic_ai_cli(
                 'original_code': decision.original_code,
                 'suggested_fix': decision.suggested_fix,
                 'explanation': decision.explanation,
-                'metadata': decision.metadata
+                'metadata': decision.metadata,
+                'false_positive_analysis': fp_analysis
             })
         
         return {
@@ -555,3 +567,59 @@ async def get_suppression_candidates(
             status_code=500,
             detail=f"Candidates retrieval failed: {str(e)}"
         )
+
+def _generate_agentic_fp_reasoning(validation_details: Dict[str, Any], decision: Any) -> str:
+    """Generate human-readable false positive reasoning for agentic decisions."""
+    if not validation_details:
+        return "No validation details available for this decision."
+    
+    reasoning_parts = []
+    
+    # Check rule-based analysis
+    rule_analysis = validation_details.get('rule_based_analysis', {})
+    if rule_analysis.get('passed'):
+        matches = rule_analysis.get('matches', [])
+        if matches:
+            reasoning_parts.append(f"Rule-based analysis identified {len(matches)} indicators:")
+            for match in matches[:3]:  # Show first 3 matches
+                reasoning_parts.append(f"  • {match}")
+    
+    # Check LLM analysis
+    llm_analysis = validation_details.get('llm_analysis', {})
+    if llm_analysis.get('used') and llm_analysis.get('analysis'):
+        reasoning_parts.append("AI analysis provided additional context for this assessment.")
+    
+    # Check specific context flags
+    if validation_details.get('test_file_detected'):
+        reasoning_parts.append("This finding is in test code, which is typically safe from exploitation.")
+    
+    if validation_details.get('mock_code_detected'):
+        reasoning_parts.append("This finding is in mock/simulation code, not production code.")
+    
+    if validation_details.get('debug_code_detected'):
+        reasoning_parts.append("This finding is in debug/development code, not production code.")
+    
+    if validation_details.get('high_confidence_rule'):
+        reasoning_parts.append("This matches a high-confidence false positive pattern.")
+    
+    # Add agentic decision context
+    if hasattr(decision, 'action'):
+        action = decision.action.value if hasattr(decision.action, 'value') else str(decision.action)
+        reasoning_parts.append(f"Agentic AI decided to: {action}")
+    
+    if hasattr(decision, 'explanation') and decision.explanation:
+        reasoning_parts.append(f"AI Explanation: {decision.explanation}")
+    
+    # Add confidence information
+    confidence = validation_details.get('confidence_score', 0)
+    if confidence > 0.8:
+        reasoning_parts.append(f"High confidence ({confidence:.1%}) that this is a false positive.")
+    elif confidence > 0.6:
+        reasoning_parts.append(f"Moderate confidence ({confidence:.1%}) that this is a false positive.")
+    else:
+        reasoning_parts.append(f"Low confidence ({confidence:.1%}) - manual review recommended.")
+    
+    if not reasoning_parts:
+        reasoning_parts.append("No specific false positive indicators found.")
+    
+    return "\n".join(reasoning_parts)

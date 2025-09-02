@@ -804,7 +804,26 @@ async def review_semgrep_results_cli(
         # Validate semgrep output and provide recommendations
         validation = validate_semgrep_output(semgrep_dict)
         
-        if not findings:
+        # Add false positive analysis to each finding
+        from app.services.false_positive_filter import FalsePositiveFilter
+        fp_filter = FalsePositiveFilter()
+        
+        enhanced_findings = []
+        for finding in findings:
+            # Analyze for false positive likelihood
+            fp_score, validation_details = fp_filter.analyze_finding(finding)
+            
+            # Add false positive analysis to the finding
+            enhanced_finding = finding.copy()
+            enhanced_finding['false_positive_analysis'] = {
+                'is_likely_false_positive': fp_score > 0.7,
+                'confidence_score': fp_score,
+                'validation_details': validation_details,
+                'reasoning': _generate_fp_reasoning(validation_details, finding)
+            }
+            enhanced_findings.append(enhanced_finding)
+        
+        if not enhanced_findings:
             return ReviewResponse(
                 upload_id=upload_id,
                 timestamp=datetime.now().isoformat(),
@@ -821,7 +840,7 @@ async def review_semgrep_results_cli(
         
         # Generate fixes with retry logic (using FREE tier for CLI endpoint)
         fixes = []
-        for finding in findings:
+        for finding in enhanced_findings:
             try:
                 # Try to generate fix (using FREE tier for CLI endpoint)
                 fix_result = generate_fixes([finding], tier="FREE", custom_prompt=custom_prompt)
@@ -841,14 +860,14 @@ async def review_semgrep_results_cli(
                 })
         
         # Calculate severity-based statistics
-        error_severity = len([f for f in findings if f.get('severity', 'UNKNOWN') == 'ERROR'])
-        warning_severity = len([f for f in findings if f.get('severity', 'UNKNOWN') == 'WARNING'])
-        info_severity = len([f for f in findings if f.get('severity', 'UNKNOWN') == 'INFO'])
-        unknown_severity = len([f for f in findings if f.get('severity', 'UNKNOWN') not in ['ERROR', 'WARNING', 'INFO']])
+        error_severity = len([f for f in enhanced_findings if f.get('severity', 'UNKNOWN') == 'ERROR'])
+        warning_severity = len([f for f in enhanced_findings if f.get('severity', 'UNKNOWN') == 'WARNING'])
+        info_severity = len([f for f in enhanced_findings if f.get('severity', 'UNKNOWN') == 'INFO'])
+        unknown_severity = len([f for f in enhanced_findings if f.get('severity', 'UNKNOWN') not in ['ERROR', 'WARNING', 'INFO']])
         
         # Generate summary
         summary = {
-            "total_vulnerabilities": len(findings),
+            "total_vulnerabilities": len(enhanced_findings),
             "error_severity_count": error_severity,
             "warning_severity_count": warning_severity,
             "info_severity_count": info_severity,
@@ -859,13 +878,13 @@ async def review_semgrep_results_cli(
             "code_context_stats": {
                 "findings_with_code": validation["findings_with_code"],
                 "findings_without_code": validation["findings_without_code"],
-                "code_coverage_percentage": round((validation["findings_with_code"] / len(findings) * 100) if len(findings) > 0 else 0, 1)
+                "code_coverage_percentage": round((validation["findings_with_code"] / len(enhanced_findings) * 100) if len(enhanced_findings) > 0 else 0, 1)
             },
             "semgrep_recommendations": validation["recommendations"]
         }
         
         # Analyze fix types and severity
-        for finding in findings:
+        for finding in enhanced_findings:
             severity = finding.get('severity', 'UNKNOWN')
             summary["severity_distribution"][severity] = summary["severity_distribution"].get(severity, 0) + 1
         
@@ -877,12 +896,12 @@ async def review_semgrep_results_cli(
         response_data = {
             "upload_id": upload_id,
             "timestamp": datetime.now().isoformat(),
-            "total_vulnerabilities": len(findings),
+            "total_vulnerabilities": len(enhanced_findings),
             "error_severity_count": error_severity,
             "warning_severity_count": warning_severity,
             "info_severity_count": info_severity,
             "unknown_severity_count": unknown_severity,
-            "findings": findings,
+            "findings": enhanced_findings,
             "fixes": fixes,
             "summary": summary,
             "errors": errors
@@ -959,3 +978,48 @@ async def review_semgrep_results_agentic_cli(
     )
     
     return enhanced_response
+
+def _generate_fp_reasoning(validation_details: Dict[str, Any], finding: Dict[str, Any]) -> str:
+    """Generate human-readable false positive reasoning."""
+    reasoning_parts = []
+    
+    # Check rule-based analysis
+    rule_analysis = validation_details.get('rule_based_analysis', {})
+    if rule_analysis.get('passed'):
+        matches = rule_analysis.get('matches', [])
+        if matches:
+            reasoning_parts.append(f"Rule-based analysis identified {len(matches)} indicators:")
+            for match in matches[:3]:  # Show first 3 matches
+                reasoning_parts.append(f"  • {match}")
+    
+    # Check LLM analysis
+    llm_analysis = validation_details.get('llm_analysis', {})
+    if llm_analysis.get('used') and llm_analysis.get('analysis'):
+        reasoning_parts.append("AI analysis provided additional context for this assessment.")
+    
+    # Check specific context flags
+    if validation_details.get('test_file_detected'):
+        reasoning_parts.append("This finding is in test code, which is typically safe from exploitation.")
+    
+    if validation_details.get('mock_code_detected'):
+        reasoning_parts.append("This finding is in mock/simulation code, not production code.")
+    
+    if validation_details.get('debug_code_detected'):
+        reasoning_parts.append("This finding is in debug/development code, not production code.")
+    
+    if validation_details.get('high_confidence_rule'):
+        reasoning_parts.append("This matches a high-confidence false positive pattern.")
+    
+    # Add confidence information
+    confidence = validation_details.get('confidence_score', 0)
+    if confidence > 0.8:
+        reasoning_parts.append(f"High confidence ({confidence:.1%}) that this is a false positive.")
+    elif confidence > 0.6:
+        reasoning_parts.append(f"Moderate confidence ({confidence:.1%}) that this is a false positive.")
+    else:
+        reasoning_parts.append(f"Low confidence ({confidence:.1%}) - manual review recommended.")
+    
+    if not reasoning_parts:
+        reasoning_parts.append("No specific false positive indicators found.")
+    
+    return "\n".join(reasoning_parts)

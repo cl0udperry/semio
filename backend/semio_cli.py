@@ -141,6 +141,36 @@ def test_agentic_cli_endpoint(api_key: str) -> bool:
             else:
                 print(f"   Enhanced data: No (No fixes generated)")
             
+            # Display agentic decisions with false positive analysis
+            decisions = result.get('decisions', [])
+            if decisions:
+                print(f"\n--- Agentic AI Decisions ---")
+                false_positive_count = 0
+                
+                for i, decision in enumerate(decisions, 1):
+                    print(f"\nDecision {i}: {decision.get('rule_id', 'Unknown')}")
+                    print(f"   File: {decision.get('file_path', 'Unknown')}:{decision.get('line_number', 'Unknown')}")
+                    print(f"   Action: {decision.get('action', 'Unknown')}")
+                    print(f"   Confidence: {decision.get('confidence', 0):.1%}")
+                    
+                    # Show false positive analysis if available
+                    fp_analysis = decision.get('false_positive_analysis')
+                    if fp_analysis:
+                        if fp_analysis.get('is_likely_false_positive'):
+                            false_positive_count += 1
+                        print(f"   False Positive Likelihood: {fp_analysis.get('confidence_score', 0):.1%}")
+                        print(f"   False Positive Reasoning:")
+                        reasoning = fp_analysis.get('reasoning', 'No reasoning provided')
+                        for line in reasoning.split('\n'):
+                            if line.strip():
+                                print(f"     {line}")
+                    
+                    if decision.get('explanation'):
+                        print(f"   AI Explanation: {decision.get('explanation')}")
+                
+                print(f"\nTotal False Positives Detected: {false_positive_count}")
+                print(f"Total Real Vulnerabilities: {len(decisions) - false_positive_count}")
+            
             return True
         else:
             print(f"Agentic CLI endpoint: Failed (Status: {response.status_code})")
@@ -183,6 +213,29 @@ def test_semgrep_analysis_cli(api_key: str, semgrep_file: str) -> bool:
             print(f"   High Confidence Fixes: {result['high_confidence_fixes']}")
             print(f"   Medium Confidence Fixes: {result['medium_confidence_fixes']}")
             print(f"   Low Confidence Fixes: {result['low_confidence_fixes']}")
+            
+            # Display enhanced false positive analysis
+            print(f"\n--- False Positive Analysis ---")
+            findings = result.get('findings', [])
+            false_positive_count = 0
+            
+            for i, finding in enumerate(findings, 1):
+                fp_analysis = finding.get('false_positive_analysis', {})
+                if fp_analysis.get('is_likely_false_positive'):
+                    false_positive_count += 1
+                    print(f"\nFinding {i}: {finding.get('rule_id', 'Unknown')}")
+                    print(f"   File: {finding.get('path', 'Unknown')}:{finding.get('start_line', 'Unknown')}")
+                    print(f"   Severity: {finding.get('severity', 'Unknown')}")
+                    print(f"   False Positive Confidence: {fp_analysis.get('confidence_score', 0):.1%}")
+                    print(f"   Reasoning:")
+                    reasoning = fp_analysis.get('reasoning', 'No reasoning provided')
+                    for line in reasoning.split('\n'):
+                        if line.strip():
+                            print(f"     {line}")
+            
+            print(f"\nTotal False Positives Detected: {false_positive_count}")
+            print(f"Total Real Vulnerabilities: {len(findings) - false_positive_count}")
+            
             return True
         else:
             print(f"Semgrep analysis failed: {response.status_code}")
