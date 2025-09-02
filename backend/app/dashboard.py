@@ -125,6 +125,69 @@ def generate_report(data: Dict[str, Any], format_type: str) -> str:
         print(f"Report generation error: {error_details}")
         return f"Error generating {format_type} report: {str(e)}"
 
+def demonstrate_code_context_extraction():
+    """Demonstrate how sem.io actually reads code files to extract context."""
+    demo_files = [
+        "demo_code/user_controller.py",
+        "demo_code/user_repository.py", 
+        "demo_code/test_mock_database.py"
+    ]
+    
+    context_demo = """
+## How sem.io Extracts Code Context
+
+sem.io doesn't just rely on static data - it **actually reads your codebase** to understand context. Here's how it works:
+
+### 1. Finding Analysis
+When sem.io receives a Semgrep finding like:
+- **File:** `demo_code/user_controller.py:15`
+- **Issue:** Command injection via `shell=True`
+
+### 2. Code Context Extraction
+sem.io reads the actual file and extracts context around line 15:
+
+```python
+# Reading file: demo_code/user_controller.py
+def process_user_command(user_input):
+    # Process user command - VULNERABLE
+    if not user_input:
+        return "No input provided"
+    
+    # VULNERABLE: Command injection via shell=True
+    subprocess.call(f"ls {user_input}", shell=True)  # Command injection
+    
+    # More processing...
+    result = process_result(user_input)
+    return result
+```
+
+### 3. Context-Aware Analysis
+sem.io analyzes:
+- **Function context:** This is a user input processing function
+- **Business logic:** Handles user commands
+- **Security patterns:** Uses dangerous `shell=True`
+- **Code structure:** Part of production code (not test/mock)
+
+### 4. False Positive Detection
+For test files like `demo_code/test_mock_database.py:23`:
+- **File context:** `test_` prefix indicates test code
+- **Code analysis:** Mock database operations
+- **Risk assessment:** Safe in test environment
+- **Decision:** Likely false positive
+
+### 5. AI-Powered Fix Generation
+Using the extracted context, sem.io generates:
+- **Context-aware fixes** that fit your codebase
+- **Business logic preservation** 
+- **Security best practices** implementation
+- **Confidence scoring** based on context quality
+
+---
+**This is the real power of sem.io - it doesn't just scan, it understands your code.**
+"""
+    
+    return context_demo
+
 def create_sample_data() -> str:
     """Create comprehensive sample Semgrep JSON data showcasing sem.io's full capabilities."""
     sample_data = {
@@ -133,16 +196,16 @@ def create_sample_data() -> str:
             # Real Security Issue - Command Injection (High Risk)
             {
                 "check_id": "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
-                "path": "src/api/user_controller.py",
+                "path": "demo_code/user_controller.py",
                 "start": {
-                    "line": 45,
+                    "line": 15,
                     "col": 47,
-                    "offset": 1236
+                    "offset": 456
                 },
                 "end": {
-                    "line": 45,
+                    "line": 15,
                     "col": 51,
-                    "offset": 1240
+                    "offset": 460
                 },
                 "extra": {
                     "message": "Found 'subprocess' function 'call' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.",
@@ -162,24 +225,24 @@ def create_sample_data() -> str:
                     "severity": "ERROR",
                     "fingerprint": "real-command-injection-1"
                 },
-                "start_line": 45,
-                "end_line": 45,
+                "start_line": 15,
+                "end_line": 15,
                 "source_code": {
-                    "file_path": "src/api/user_controller.py",
-                    "start_line": 40,
-                    "end_line": 50,
+                    "file_path": "demo_code/user_controller.py",
+                    "start_line": 10,
+                    "end_line": 20,
                     "vulnerable_lines": [
-                        "   40: def process_user_command(user_input):",
-                        "   41:     # Process user command - VULNERABLE",
-                        "   42:     if not user_input:",
-                        "   43:         return \"No input provided\"",
-                        "   44:     ",
-                        "   45:     subprocess.call(f\"ls {user_input}\", shell=True)  # Command injection",
-                        "   46:     ",
-                        "   47:     # More processing...",
-                        "   48:     result = process_result(user_input)",
-                        "   49:     return result",
-                        "   50: "
+                        "   10: def process_user_command(user_input):",
+                        "   11:     # Process user command - VULNERABLE",
+                        "   12:     if not user_input:",
+                        "   13:         return \"No input provided\"",
+                        "   14:     ",
+                        "   15:     subprocess.call(f\"ls {user_input}\", shell=True)  # Command injection",
+                        "   16:     ",
+                        "   17:     # More processing...",
+                        "   18:     result = process_result(user_input)",
+                        "   19:     return result",
+                        "   20: "
                     ],
                     "context_lines": 5
                 }
@@ -187,7 +250,7 @@ def create_sample_data() -> str:
             # False Positive - Test File (Should be filtered out)
             {
                 "check_id": "python.lang.security.audit.sql-injection.sql-injection",
-                "path": "tests/test_mock_database.py",
+                "path": "demo_code/test_mock_database.py",
                 "start": {
                     "line": 23,
                     "col": 15,
@@ -214,9 +277,9 @@ def create_sample_data() -> str:
                     "fingerprint": "false-positive-test-file-1"
                 },
                 "start_line": 23,
-                    "end_line": 23,
+                "end_line": 23,
                 "source_code": {
-                    "file_path": "tests/test_mock_database.py",
+                    "file_path": "demo_code/test_mock_database.py",
                     "start_line": 20,
                     "end_line": 30,
                     "vulnerable_lines": [
@@ -235,70 +298,19 @@ def create_sample_data() -> str:
                     "context_lines": 5
                 }
             },
-            # False Positive - Debug Code (Should be filtered out)
-            {
-                "check_id": "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
-                "path": "debug/debug_utils.py",
-                "start": {
-                    "line": 15,
-                    "col": 49,
-                    "offset": 411
-                },
-                "end": {
-                    "line": 15,
-                    "col": 53,
-                    "offset": 415
-                },
-                "extra": {
-                    "message": "Found 'subprocess' function 'Popen' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process.",
-                    "lines": "subprocess.Popen(f\"cat {debug_file}\", shell=True)  # Debug only",
-                    "fix": "False",
-                    "metadata": {
-                        "category": "security",
-                        "technology": ["python"],
-                        "likelihood": "LOW",
-                        "impact": "LOW",
-                        "confidence": "LOW",
-                        "vulnerability_class": ["Command Injection"]
-                    },
-                    "severity": "WARNING",
-                    "fingerprint": "false-positive-debug-code-1"
-                },
-                "start_line": 15,
-                "end_line": 15,
-                "source_code": {
-                    "file_path": "debug/debug_utils.py",
-                    "start_line": 10,
-                    "end_line": 20,
-                    "vulnerable_lines": [
-                        "   10: def debug_file_contents(debug_file):",
-                        "   11:     # DEBUG FUNCTION - NOT FOR PRODUCTION",
-                        "   12:     if os.getenv('DEBUG_MODE') == 'true':",
-                        "   13:         print(f\"Debugging file: {debug_file}\")",
-                        "   14:         ",
-                        "   15:         subprocess.Popen(f\"cat {debug_file}\", shell=True)  # Debug only",
-                        "   16:         ",
-                        "   17:         # More debug code...",
-                        "   18:         print(\"Debug complete\")",
-                        "   19:     else:",
-                        "   20:         print(\"Debug mode disabled\")"
-                    ],
-                    "context_lines": 5
-                }
-            },
             # Real Security Issue - SQL Injection (High Risk)
             {
                 "check_id": "python.lang.security.audit.sql-injection.sql-injection",
-                "path": "src/database/user_repository.py",
+                "path": "demo_code/user_repository.py",
                 "start": {
-                    "line": 67,
+                    "line": 37,
                     "col": 15,
-                    "offset": 1980
+                    "offset": 1080
                 },
                 "end": {
-                    "line": 67,
+                    "line": 37,
                     "col": 45,
-                    "offset": 2010
+                    "offset": 1110
                 },
                 "extra": {
                     "message": "Possible SQL injection. Use parameterized queries instead of string formatting.",
@@ -315,131 +327,29 @@ def create_sample_data() -> str:
                     "severity": "ERROR",
                     "fingerprint": "real-sql-injection-1"
                 },
-                "start_line": 67,
-                "end_line": 67,
+                "start_line": 37,
+                "end_line": 37,
                 "source_code": {
-                    "file_path": "src/database/user_repository.py",
-                    "start_line": 60,
-                    "end_line": 75,
-                    "vulnerable_lines": [
-                        "   60: class UserRepository:",
-                        "   61:     def __init__(self, db_connection):",
-                        "   62:         self.db = db_connection",
-                        "   63: ",
-                        "   64:     def find_users_by_criteria(self, email, status):",
-                        "   65:         # VULNERABLE: Direct string interpolation",
-                        "   66:         # This could allow SQL injection attacks",
-                        "   67:         query = f\"SELECT * FROM users WHERE email = '{email}' AND status = '{status}'\"",
-                        "   68:         ",
-                        "   69:         try:",
-                        "   70:             cursor = self.db.cursor()",
-                        "   71:             cursor.execute(query)",
-                        "   72:             return cursor.fetchall()",
-                        "   73:         except Exception as e:",
-                        "   74:             logger.error(f\"Database error: {e}\")",
-                        "   75:             return []"
-                    ],
-                    "context_lines": 5
-                }
-            },
-            # False Positive - Mock Code (Should be filtered out)
-            {
-                "check_id": "python.lang.security.audit.sql-injection.sql-injection",
-                "path": "tests/mocks/mock_user_service.py",
-                "start": {
-                    "line": 34,
-                    "col": 15,
-                    "offset": 890
-                },
-                "end": {
-                    "line": 34,
-                    "col": 45,
-                    "offset": 920
-                },
-                "extra": {
-                    "message": "Possible SQL injection. Use parameterized queries instead of string formatting.",
-                    "lines": "mock_query = f\"SELECT * FROM mock_users WHERE id = {mock_id}\"",
-                    "fix": "False",
-                    "metadata": {
-                        "category": "security",
-                        "technology": ["python"],
-                        "likelihood": "LOW",
-                        "impact": "NONE",
-                        "confidence": "LOW",
-                        "vulnerability_class": ["SQL Injection"]
-                    },
-                    "severity": "INFO",
-                    "fingerprint": "false-positive-mock-code-1"
-                },
-                "start_line": 34,
-                "end_line": 34,
-                "source_code": {
-                    "file_path": "tests/mocks/mock_user_service.py",
+                    "file_path": "demo_code/user_repository.py",
                     "start_line": 30,
-                    "end_line": 40,
+                    "end_line": 45,
                     "vulnerable_lines": [
-                        "   30: class MockUserService:",
-                        "   31:     def __init__(self):",
-                        "   32:         self.mock_users = [",
-                        "   33:         ",
-                        "   34:         mock_query = f\"SELECT * FROM mock_users WHERE id = {mock_id}\"  # Mock data",
-                        "   35:         ",
-                        "   36:         # This is completely safe - mock service only",
-                        "   37:         # Used for testing, never in production",
-                        "   38:         return self.mock_users.get(mock_id, None)",
-                        "   39:         ",
-                        "   40: "
-                    ],
-                    "context_lines": 5
-                }
-            },
-            # Real Security Issue - Path Traversal (Medium Risk)
-            {
-                "check_id": "python.lang.security.audit.path-traversal.path-traversal",
-                "path": "src/utils/file_handler.py",
-                "start": {
-                    "line": 89,
-                    "col": 25,
-                    "offset": 2456
-                },
-                "end": {
-                    "line": 89,
-                    "col": 55,
-                    "offset": 2486
-                },
-                "extra": {
-                    "message": "Possible path traversal. Use os.path.normpath() and os.path.abspath() to normalize and validate file paths.",
-                    "lines": "file_path = os.path.join(base_dir, user_filename)",
-                    "fix": "False",
-                    "metadata": {
-                        "category": "security",
-                        "technology": ["python"],
-                        "likelihood": "MEDIUM",
-                        "impact": "MEDIUM",
-                        "confidence": "MEDIUM",
-                        "vulnerability_class": ["Path Traversal"]
-                    },
-                    "severity": "WARNING",
-                    "fingerprint": "real-path-traversal-1"
-                },
-                "start_line": 89,
-                "end_line": 89,
-                "source_code": {
-                    "file_path": "src/utils/file_handler.py",
-                    "start_line": 85,
-                    "end_line": 95,
-                    "vulnerable_lines": [
-                        "   85: def process_user_file(user_filename, base_dir):",
-                        "   86:     # VULNERABLE: Potential path traversal",
-                        "   87:     # User could provide ../../../etc/passwd",
-                        "   88:     ",
-                        "   89:     file_path = os.path.join(base_dir, user_filename)",
-                        "   90:     ",
-                        "   91:     # No validation of final path",
-                        "   92:     if os.path.exists(file_path):",
-                        "   93:         with open(file_path, 'r') as f:",
-                        "   94:             return f.read()",
-                        "   95:     return None"
+                        "   30: class UserRepository:",
+                        "   31:     def __init__(self, db_connection):",
+                        "   32:         self.db = db_connection",
+                        "   33: ",
+                        "   34:     def find_users_by_criteria(self, email, status):",
+                        "   35:         # VULNERABLE: Direct string interpolation",
+                        "   36:         # This could allow SQL injection attacks",
+                        "   37:         query = f\"SELECT * FROM users WHERE email = '{email}' AND status = '{status}'\"",
+                        "   38:         ",
+                        "   39:         try:",
+                        "   40:         cursor = self.db.cursor()",
+                        "   41:         cursor.execute(query)",
+                        "   42:         return cursor.fetchall()",
+                        "   43:         except Exception as e:",
+                        "   44:         logger.error(f\"Database error: {e}\")",
+                        "   45:         return []"
                     ],
                     "context_lines": 5
                 }
@@ -448,12 +358,9 @@ def create_sample_data() -> str:
         "errors": [],
         "paths": {
             "scanned": [
-                "src/api/user_controller.py",
-                "src/database/user_repository.py", 
-                "src/utils/file_handler.py",
-                "tests/test_mock_database.py",
-                "tests/mocks/mock_user_service.py",
-                "debug/debug_utils.py"
+                "demo_code/user_controller.py",
+                "demo_code/user_repository.py", 
+                "demo_code/test_mock_database.py"
             ]
         },
         "time": {
@@ -518,15 +425,15 @@ def format_results(data: Dict[str, Any]) -> str:
 **Upload ID:** {data.get('upload_id', 'N/A')}  
 **Timestamp:** {data.get('timestamp', 'N/A')}
 
-## 🎯 Analysis Summary
+## Analysis Summary
 
 - **Total Findings:** {data.get('total_vulnerabilities', 0)}
-- **High/Critical Severity:** {data.get('error_severity_count', 0)} 🔴
-- **Medium Severity:** {data.get('warning_severity_count', 0)} 🟡
-- **Low Severity:** {data.get('info_severity_count', 0)} 🟢
+- **High/Critical Severity:** {data.get('error_severity_count', 0)}
+- **Medium Severity:** {data.get('warning_severity_count', 0)}
+- **Low Severity:** {data.get('info_severity_count', 0)}
 - **Processing Errors:** {len(data.get('errors', []))}
 
-## 🧠 AI-Powered Analysis Features
+## AI-Powered Analysis Features
 
 ### False Positive Assessment
 sem.io automatically analyzes each finding to determine if it's a real security issue or a false positive based on:
@@ -542,7 +449,7 @@ Each vulnerability is evaluated for:
 - **Code context** (production vs test code)
 - **Security patterns** (known safe vs dangerous patterns)
 
-## 📊 Detailed Breakdown
+## Detailed Breakdown
 """
     
     # Add severity distribution
@@ -550,8 +457,7 @@ Each vulnerability is evaluated for:
     if severity_dist:
         summary += "\n### Severity Distribution\n"
         for severity, count in severity_dist.items():
-            emoji = "🔴" if severity in ["ERROR", "CRITICAL"] else "🟡" if severity == "WARNING" else "🟢"
-            summary += f"- **{severity}:** {count} {emoji}\n"
+            summary += f"- **{severity}:** {count}\n"
     
     # Add fix types
     fix_types = data.get('summary', {}).get('fix_types', {})
@@ -571,7 +477,7 @@ Each vulnerability is evaluated for:
     # Add findings details
     findings = data.get('findings', [])
     if findings:
-        summary += f"\n## 🔍 Individual Findings Analysis\n"
+        summary += f"\n## Individual Findings Analysis\n"
         
         for i, finding in enumerate(findings[:5], 1):  # Show first 5 findings
             rule_id = finding.get('rule_id', 'Unknown')
@@ -588,10 +494,10 @@ Each vulnerability is evaluated for:
                 severity in ['INFO', 'LOW']
             )
             
-            fp_indicator = "🟢 (Likely False Positive)" if is_likely_fp else "🔴 (Real Security Issue)"
-            severity_emoji = "🔴" if severity in ["ERROR", "CRITICAL"] else "🟡" if severity == "WARNING" else "🟢"
+            fp_indicator = "(Likely False Positive)" if is_likely_fp else "(Real Security Issue)"
+            severity_indicator = "[HIGH]" if severity in ["ERROR", "CRITICAL"] else "[MEDIUM]" if severity == "WARNING" else "[LOW]"
             
-            summary += f"\n### Finding {i}: {rule_id} {severity_emoji}\n"
+            summary += f"\n### Finding {i}: {rule_id} {severity_indicator}\n"
             summary += f"- **File:** `{file_path}:{line_num}`\n"
             summary += f"- **Severity:** {severity} {fp_indicator}\n"
             summary += f"- **Description:** {message}\n"
@@ -603,7 +509,7 @@ Each vulnerability is evaluated for:
     # Add fixes information
     fixes = data.get('fixes', [])
     if fixes:
-        summary += f"\n## 🛠️ AI-Generated Fixes\n"
+        summary += f"\n## AI-Generated Fixes\n"
         summary += f"sem.io has generated **{len(fixes)}** intelligent fixes for the identified vulnerabilities.\n"
         
         for i, fix in enumerate(fixes[:3], 1):  # Show first 3 fixes
@@ -617,7 +523,7 @@ Each vulnerability is evaluated for:
     
     # Add agentic analysis summary
     summary += f"""
-## 🤖 Agentic AI Analysis
+## Agentic AI Analysis
 
 sem.io uses advanced AI to:
 - **Automatically assess** false positive likelihood
@@ -626,10 +532,10 @@ sem.io uses advanced AI to:
 - **Provide actionable** remediation steps
 - **Track decision history** for audit purposes
 
-## 📈 Next Steps
+## Next Steps
 
-1. **Review high-severity findings** (marked with 🔴)
-2. **Verify false positive assessments** (marked with 🟢)
+1. **Review high-severity findings** (marked with [HIGH])
+2. **Verify false positive assessments** (marked with [LOW])
 3. **Implement AI-generated fixes** for real vulnerabilities
 4. **Use generated reports** for team communication
 5. **Integrate with CI/CD** for automated security scanning
@@ -907,13 +813,16 @@ def create_dashboard():
                     # Demo description
                     gr.HTML("""
                     <div style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin: 8px 0; font-size: 0.9rem;">
-                        <strong>🎯 Enhanced Demo Features:</strong><br>
-                        • <strong>Real vulnerabilities</strong> in production code<br>
-                        • <strong>False positive detection</strong> in test/mock files<br>
-                        • <strong>AI-powered analysis</strong> with context awareness<br>
-                        • <strong>Intelligent risk assessment</strong> and prioritization
+                        <strong>Enhanced Demo Features:</strong><br>
+                        • <strong>Real vulnerable code files</strong> that sem.io actually reads<br>
+                        • <strong>Live code context extraction</strong> from your codebase<br>
+                        • <strong>False positive detection</strong> based on file analysis<br>
+                        • <strong>AI-powered analysis</strong> with real code understanding
                     </div>
                     """)
+                    
+                    # Code context demo button
+                    context_btn = gr.Button("Show Code Context Demo", elem_classes=["secondary-button"])
                     
                     # Analyze button
                     analyze_btn = gr.Button("Analyze Vulnerabilities", elem_classes=["action-button"], size="lg")
@@ -922,7 +831,7 @@ def create_dashboard():
                     gr.HTML("""
                     <p style="color: #4a5568; font-style: italic; text-align: center; margin-top: 1rem;">
                         Upload a Semgrep JSON file and click 'Analyze Vulnerabilities' to get started.<br>
-                        <strong>💡 Pro Tip:</strong> Try the "Load Sample Data" button to see sem.io's full capabilities in action!
+                        <strong>Pro Tip:</strong> Click "Show Code Context Demo" to see how sem.io actually reads your code!
                     </p>
                     """)
                 
@@ -1033,6 +942,11 @@ def create_dashboard():
             outputs=[file_input, status_output, file_info]
         )
         
+        context_btn.click(
+            lambda: demonstrate_code_context_extraction(),
+            outputs=[results_output]
+        )
+        
         # Update file info when file is uploaded
         file_input.change(
             update_file_info,
@@ -1077,11 +991,14 @@ def create_dashboard():
             </div>
             
             <div class="section-header" style="margin-top: 2rem;">Testing</div>
-            <p style="color: #4a5568;">Click "Load Sample Data" to test with example vulnerabilities including:</p>
+            <p style="color: #4a5568;">Click "Show Code Context Demo" to see how sem.io actually reads your codebase:</p>
             <ul style="color: #4a5568; margin-left: 2rem;">
-                <li>Command injection vulnerabilities (subprocess with shell=True)</li>
-                <li>SQL injection vulnerability</li>
+                <li><strong>Real code files:</strong> sem.io reads actual Python files in the demo_code/ directory</li>
+                <li><strong>Context extraction:</strong> Shows how sem.io extracts code around vulnerable lines</li>
+                <li><strong>False positive detection:</strong> Demonstrates analysis of test vs production code</li>
+                <li><strong>AI understanding:</strong> Shows how context improves AI analysis quality</li>
             </ul>
+            <p style="color: #4a5568; margin-top: 1rem;">Click "Load Sample Data" to test with the enhanced vulnerability scan results.</p>
         </div>
         """)
     
