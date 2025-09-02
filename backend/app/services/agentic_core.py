@@ -15,6 +15,7 @@ from .fix_validator import FixValidator
 from .decision_engine import DecisionEngine
 from .memory_store import MemoryStore
 from .agentic_types import ActionType, AgentDecision
+from .suppression_audit import SuppressionAuditTrail, ValidationMethod
 from ..models.user import UserTier
 
 # Configure logging
@@ -31,6 +32,7 @@ class SemioAgenticCore:
         self.fix_validator = FixValidator()
         self.decision_engine = DecisionEngine()
         self.memory_store = MemoryStore()
+        self.audit_trail = SuppressionAuditTrail()
         
     def process_semgrep_findings(self, semgrep_json: Dict, 
                                 auto_fix_threshold: float = 0.9,
@@ -81,9 +83,31 @@ class SemioAgenticCore:
         """
         finding_id = f"{finding['rule_id']}:{finding['path']}:{finding['start_line']}"
         
-        # Step 2: False Positive Analysis
-        fp_score = self.fp_filter.analyze_finding(finding)
+        # Step 2: False Positive Analysis with Audit Trail
+        fp_score, validation_details = self.fp_filter.analyze_finding(finding)
         logger.debug(f"False positive score for {finding_id}: {fp_score}")
+        
+        # Create audit record if suppression is likely
+        if fp_score >= 0.8:  # High likelihood of suppression
+            validation_methods = []
+            if validation_details.get('rule_based_analysis', {}).get('passed'):
+                validation_methods.append(ValidationMethod.RULE_BASED)
+            if validation_details.get('llm_analysis', {}).get('used'):
+                validation_methods.append(ValidationMethod.LLM_ANALYSIS)
+            if validation_details.get('test_file_detected'):
+                validation_methods.append(ValidationMethod.PATTERN_MATCHING)
+            if validation_details.get('context_analysis'):
+                validation_methods.append(ValidationMethod.CONTEXT_ANALYSIS)
+            
+            audit_record = self.audit_trail.create_suppression_record(
+                finding=finding,
+                fp_score=fp_score,
+                suppression_threshold=0.95,  # Conservative threshold
+                validation_methods=validation_methods,
+                validation_details=validation_details,
+                decision_made_by="system"
+            )
+            logger.info(f"Created suppression audit record: {audit_record.audit_id}")
         
         # Step 3: Generate Fix (if not likely false positive)
         fix_confidence = 0.0

@@ -5,6 +5,7 @@ Agentic AI API endpoints for Semio
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Query
 from fastapi.responses import JSONResponse
 from typing import Dict, List, Optional
+from datetime import datetime
 import json
 import logging
 import traceback
@@ -456,3 +457,101 @@ def _summarize_actions(decisions: List[AgentDecision]) -> Dict[str, int]:
         action = decision.action.value
         summary[action] = summary.get(action, 0) + 1
     return summary
+
+# ============================================================================
+# SUPPRESSION AUDIT TRAIL ENDPOINTS
+# ============================================================================
+
+@router.get("/agentic/suppression-audit")
+async def get_suppression_audit(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    file_path: Optional[str] = None,
+    rule_id: Optional[str] = None,
+    current_user = Depends(get_current_user_by_api_key_header)
+):
+    """Get comprehensive suppression audit report"""
+    try:
+        core = get_agentic_core()
+        
+        # Parse dates if provided
+        start_dt = None
+        end_dt = None
+        if start_date:
+            start_dt = datetime.fromisoformat(start_date)
+        if end_date:
+            end_dt = datetime.fromisoformat(end_date)
+        
+        report = core.audit_trail.get_suppression_report(
+            start_date=start_dt,
+            end_date=end_dt,
+            file_path=file_path,
+            rule_id=rule_id
+        )
+        
+        return report
+        
+    except Exception as e:
+        logger.error(f"Suppression audit report failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Audit report failed: {str(e)}"
+        )
+
+@router.post("/agentic/approve-suppression/{audit_id}")
+async def approve_suppression(
+    audit_id: str,
+    current_user = Depends(get_current_user_by_api_key_header)
+):
+    """Approve a specific suppression decision"""
+    try:
+        core = get_agentic_core()
+        success = core.audit_trail.approve_suppression(audit_id, current_user.id)
+        
+        if success:
+            return {
+                'audit_id': audit_id,
+                'approved': True,
+                'approved_by': current_user.id,
+                'approval_timestamp': datetime.now().isoformat()
+            }
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Suppression record {audit_id} not found"
+            )
+        
+    except Exception as e:
+        logger.error(f"Suppression approval failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Approval failed: {str(e)}"
+        )
+
+@router.get("/agentic/suppression-candidates")
+async def get_suppression_candidates(
+    current_user = Depends(get_current_user_by_api_key_header)
+):
+    """Get suppression candidates that require human review"""
+    try:
+        core = get_agentic_core()
+        
+        # Get all records that haven't been approved yet
+        report = core.audit_trail.get_suppression_report()
+        pending_records = [
+            record for record in report['detailed_records']
+            if not record.get('decision_approved_by')
+        ]
+        
+        return {
+            'pending_suppressions': pending_records,
+            'total_pending': len(pending_records),
+            'requires_review': len(pending_records) > 0
+        }
+        
+    except Exception as e:
+        logger.error(f"Suppression candidates failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Candidates retrieval failed: {str(e)}"
+        )

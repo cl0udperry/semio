@@ -87,19 +87,26 @@ class FalsePositiveFilter:
             }
         }
     
-    def analyze_finding(self, finding: Dict) -> float:
+    def analyze_finding(self, finding: Dict) -> tuple[float, Dict[str, Any]]:
         """
-        Analyze a finding to determine false positive likelihood
+        Analyze a finding to determine false positive likelihood with detailed validation
         
         Args:
             finding: Semgrep finding dictionary
             
         Returns:
-            Float between 0.0 (definitely not false positive) and 1.0 (definitely false positive)
+            Tuple of (score, validation_details) where score is between 0.0 and 1.0
         """
         try:
+            validation_details = {}
+            
             # Step 1: Rule-based analysis
             rule_score, rule_matches = self._rule_based_analysis(finding)
+            validation_details['rule_based_analysis'] = {
+                'score': rule_score,
+                'matches': rule_matches,
+                'passed': rule_score > 0.5
+            }
             
             # Step 2: LLM-based analysis (if rule score is ambiguous)
             llm_score = 0.0
@@ -107,23 +114,49 @@ class FalsePositiveFilter:
             
             if 0.3 <= rule_score <= 0.7:  # Ambiguous cases
                 llm_score, llm_analysis = self._llm_based_analysis(finding)
+                validation_details['llm_analysis'] = {
+                    'score': llm_score,
+                    'analysis': llm_analysis,
+                    'used': True,
+                    'passed': llm_score > 0.5
+                }
+            else:
+                validation_details['llm_analysis'] = {
+                    'score': 0.0,
+                    'analysis': None,
+                    'used': False,
+                    'passed': False
+                }
             
             # Step 3: Combine scores
             if llm_analysis:
                 # Weighted combination: 70% rule-based, 30% LLM
                 final_score = (rule_score * 0.7) + (llm_score * 0.3)
+                validation_details['llm_analysis_used'] = True
             else:
                 final_score = rule_score
+                validation_details['llm_analysis_used'] = False
+            
+            # Add final validation details
+            validation_details['final_score'] = final_score
+            validation_details['confidence_score'] = final_score
+            validation_details['suppression_threshold'] = 0.95  # Conservative threshold
+            
+            # Add context-specific flags
+            validation_details['test_file_detected'] = self._is_test_context(finding.get('code', ''), finding.get('message', ''))
+            validation_details['mock_code_detected'] = any('mock' in match.lower() for match in rule_matches)
+            validation_details['debug_code_detected'] = self._is_debug_context(finding.get('code', ''), finding.get('message', ''))
+            validation_details['high_confidence_rule'] = finding.get('rule_id', '') in self.high_confidence_rules
             
             logger.debug(f"FP analysis for {finding.get('rule_id', 'unknown')}: "
                         f"rule_score={rule_score:.2f}, llm_score={llm_score:.2f}, "
                         f"final_score={final_score:.2f}")
             
-            return final_score
+            return final_score, validation_details
             
         except Exception as e:
             logger.error(f"Error in false positive analysis: {e}")
-            return 0.5  # Neutral score on error
+            return 0.5, {'error': str(e), 'final_score': 0.5}  # Neutral score on error
     
     def _rule_based_analysis(self, finding: Dict) -> Tuple[float, List[str]]:
         """
