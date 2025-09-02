@@ -62,8 +62,6 @@ class SuppressionAuditRecord:
     # Decision tracking
     decision_timestamp: datetime
     decision_made_by: str  # "system" or "user_id"
-    decision_approved_by: Optional[str] = None
-    approval_timestamp: Optional[datetime] = None
     
     # Audit trail
     audit_trail: List[Dict[str, Any]]
@@ -75,6 +73,10 @@ class SuppressionAuditRecord:
     # Business impact
     business_impact: str  # "none", "low", "medium", "high"
     affected_components: List[str]
+    
+    # Optional fields with defaults (must come after required fields)
+    decision_approved_by: Optional[str] = None
+    approval_timestamp: Optional[datetime] = None
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
