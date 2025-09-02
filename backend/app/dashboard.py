@@ -771,7 +771,7 @@ def create_dashboard():
         with gr.Row():
             gr.HTML("""
             <div class="hero-section">
-                <div class="hero-title">sem.io cicd : AI Security Analysis Agent</div>
+                <div class="hero-title">Sem.io CICD : AI Security Analysis Agent</div>
                 <div class="hero-subtitle">
                     Stop drowning in false alarms. sem.io uses AI to analyze security scan results, filter out noise, and provide intelligent fix recommendations that developers can trust.
                 </div>
@@ -976,7 +976,6 @@ Below are the detailed analysis results:
                 <p><strong>5. (Near) Future enhancements:</strong></p>
                 <ul style="margin-left: 2rem; margin-top: 0.5rem;">
                     <li>False Positive Filtering</li>
-                    <li>Implementation of fixes into code for high confidence fixes (with human approval)</li>
                 </ul>
             </div>
             
