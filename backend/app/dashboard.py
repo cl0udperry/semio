@@ -126,22 +126,23 @@ def generate_report(data: Dict[str, Any], format_type: str) -> str:
         return f"Error generating {format_type} report: {str(e)}"
 
 def create_sample_data() -> str:
-    """Create sample Semgrep JSON data for testing."""
+    """Create comprehensive sample Semgrep JSON data showcasing sem.io's full capabilities."""
     sample_data = {
         "version": "1.131.0",
         "results": [
+            # Real Security Issue - Command Injection (High Risk)
             {
                 "check_id": "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
-                "path": "test-files/test.py",
+                "path": "src/api/user_controller.py",
                 "start": {
-                    "line": 11,
+                    "line": 45,
                     "col": 47,
-                    "offset": 336
+                    "offset": 1236
                 },
                 "end": {
-                    "line": 11,
+                    "line": 45,
                     "col": 51,
-                    "offset": 340
+                    "offset": 1240
                 },
                 "extra": {
                     "message": "Found 'subprocess' function 'call' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.",
@@ -149,148 +150,296 @@ def create_sample_data() -> str:
                     "fix": "False",
                     "metadata": {
                         "source-rule-url": "https://bandit.readthedocs.io/en/latest/plugins/b602_subprocess_popen_with_shell_equals_true.html",
-                        "owasp": [
-                            "A01:2017 - Injection",
-                            "A03:2021 - Injection"
-                        ],
-                        "cwe": [
-                            "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')"
-                        ],
+                        "owasp": ["A01:2017 - Injection", "A03:2021 - Injection"],
+                        "cwe": ["CWE-78: Improper Neutralization of Special Elements used in an OS Command"],
                         "category": "security",
-                        "technology": [
-                            "python"
-                        ],
+                        "technology": ["python"],
                         "likelihood": "HIGH",
-                        "impact": "LOW",
-                        "confidence": "MEDIUM",
-                        "vulnerability_class": [
-                            "Command Injection"
-                        ]
+                        "impact": "HIGH",
+                        "confidence": "HIGH",
+                        "vulnerability_class": ["Command Injection"]
                     },
                     "severity": "ERROR",
-                    "fingerprint": "sample-fingerprint-1"
+                    "fingerprint": "real-command-injection-1"
                 },
-                "start_line": 11,
-                "end_line": 11,
+                "start_line": 45,
+                "end_line": 45,
                 "source_code": {
-                    "file_path": "test-files/test.py",
-                    "start_line": 11,
-                    "end_line": 11,
+                    "file_path": "src/api/user_controller.py",
+                    "start_line": 40,
+                    "end_line": 50,
                     "vulnerable_lines": [
-                        "    6: ",
-                        "    7: def vulnerable_function(user_input):",
-                        "    8:     # SQL Injection vulnerability",
-                        "    9:     query = f\"SELECT * FROM users WHERE id = {user_input}\"",
-                        "   10:     os.system(f\"echo {user_input}\")  # Command injection",
-                        "   11:     subprocess.call(f\"ls {user_input}\", shell=True)  # Command injection",
-                        "   12:     subprocess.Popen(f\"cat {user_input}\", shell=True)  # Command injection",
-                        "   13:     return query"
+                        "   40: def process_user_command(user_input):",
+                        "   41:     # Process user command - VULNERABLE",
+                        "   42:     if not user_input:",
+                        "   43:         return \"No input provided\"",
+                        "   44:     ",
+                        "   45:     subprocess.call(f\"ls {user_input}\", shell=True)  # Command injection",
+                        "   46:     ",
+                        "   47:     # More processing...",
+                        "   48:     result = process_result(user_input)",
+                        "   49:     return result",
+                        "   50: "
                     ],
                     "context_lines": 5
                 }
             },
+            # False Positive - Test File (Should be filtered out)
+            {
+                "check_id": "python.lang.security.audit.sql-injection.sql-injection",
+                "path": "tests/test_mock_database.py",
+                "start": {
+                    "line": 23,
+                    "col": 15,
+                    "offset": 580
+                },
+                "end": {
+                    "line": 23,
+                    "col": 45,
+                    "offset": 610
+                },
+                "extra": {
+                    "message": "Possible SQL injection. Use parameterized queries instead of string formatting.",
+                    "lines": "query = f\"SELECT * FROM mock_users WHERE id = {test_id}\"",
+                    "fix": "False",
+                    "metadata": {
+                        "category": "security",
+                        "technology": ["python"],
+                        "likelihood": "MEDIUM",
+                        "impact": "LOW",
+                        "confidence": "LOW",
+                        "vulnerability_class": ["SQL Injection"]
+                    },
+                    "severity": "WARNING",
+                    "fingerprint": "false-positive-test-file-1"
+                },
+                "start_line": 23,
+                    "end_line": 23,
+                "source_code": {
+                    "file_path": "tests/test_mock_database.py",
+                    "start_line": 20,
+                    "end_line": 30,
+                    "vulnerable_lines": [
+                        "   20: def test_user_query():",
+                        "   21:     # Test function with mock data",
+                        "   22:     test_id = \"123\"",
+                        "   23:     query = f\"SELECT * FROM mock_users WHERE id = {test_id}\"  # Test data only",
+                        "   24:     ",
+                        "   25:     # This is safe - test environment only",
+                        "   26:     mock_db = MockDatabase()",
+                        "   27:     result = mock_db.execute(query)",
+                        "   28:     assert result is not None",
+                        "   29:     ",
+                        "   30: "
+                    ],
+                    "context_lines": 5
+                }
+            },
+            # False Positive - Debug Code (Should be filtered out)
             {
                 "check_id": "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
-                "path": "test-files/test.py",
+                "path": "debug/debug_utils.py",
                 "start": {
-                    "line": 12,
+                    "line": 15,
                     "col": 49,
                     "offset": 411
                 },
                 "end": {
-                    "line": 12,
+                    "line": 15,
                     "col": 53,
                     "offset": 415
                 },
                 "extra": {
-                    "message": "Found 'subprocess' function 'Popen' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.",
-                    "lines": "subprocess.Popen(f\"cat {user_input}\", shell=True)  # Command injection",
+                    "message": "Found 'subprocess' function 'Popen' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process.",
+                    "lines": "subprocess.Popen(f\"cat {debug_file}\", shell=True)  # Debug only",
                     "fix": "False",
                     "metadata": {
-                        "source-rule-url": "https://bandit.readthedocs.io/en/latest/plugins/b602_subprocess_popen_with_shell_equals_true.html",
-                        "owasp": [
-                            "A01:2017 - Injection",
-                            "A03:2021 - Injection"
-                        ],
-                        "cwe": [
-                            "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')"
-                        ],
                         "category": "security",
-                        "technology": [
-                            "python"
-                        ],
-                        "likelihood": "HIGH",
+                        "technology": ["python"],
+                        "likelihood": "LOW",
                         "impact": "LOW",
-                        "confidence": "MEDIUM",
-                        "vulnerability_class": [
-                            "Command Injection"
-                        ]
+                        "confidence": "LOW",
+                        "vulnerability_class": ["Command Injection"]
                     },
-                    "severity": "ERROR",
-                    "fingerprint": "sample-fingerprint-2"
+                    "severity": "WARNING",
+                    "fingerprint": "false-positive-debug-code-1"
                 },
-                "start_line": 12,
-                "end_line": 12,
+                "start_line": 15,
+                "end_line": 15,
                 "source_code": {
-                    "file_path": "test-files/test.py",
-                    "start_line": 12,
-                    "end_line": 12,
+                    "file_path": "debug/debug_utils.py",
+                    "start_line": 10,
+                    "end_line": 20,
                     "vulnerable_lines": [
-                        "    7: def vulnerable_function(user_input):",
-                        "    8:     # SQL Injection vulnerability",
-                        "    9:     query = f\"SELECT * FROM users WHERE id = {user_input}\"",
-                        "   10:     os.system(f\"echo {user_input}\")  # Command injection",
-                        "   11:     subprocess.call(f\"ls {user_input}\", shell=True)  # Command injection",
-                        "   12:     subprocess.Popen(f\"cat {user_input}\", shell=True)  # Command injection",
-                        "   13:     return query"
+                        "   10: def debug_file_contents(debug_file):",
+                        "   11:     # DEBUG FUNCTION - NOT FOR PRODUCTION",
+                        "   12:     if os.getenv('DEBUG_MODE') == 'true':",
+                        "   13:         print(f\"Debugging file: {debug_file}\")",
+                        "   14:         ",
+                        "   15:         subprocess.Popen(f\"cat {debug_file}\", shell=True)  # Debug only",
+                        "   16:         ",
+                        "   17:         # More debug code...",
+                        "   18:         print(\"Debug complete\")",
+                        "   19:     else:",
+                        "   20:         print(\"Debug mode disabled\")"
                     ],
                     "context_lines": 5
                 }
             },
+            # Real Security Issue - SQL Injection (High Risk)
             {
                 "check_id": "python.lang.security.audit.sql-injection.sql-injection",
-                "path": "test-files/test.py",
+                "path": "src/database/user_repository.py",
                 "start": {
-                    "line": 9,
+                    "line": 67,
                     "col": 15,
-                    "offset": 280
+                    "offset": 1980
                 },
                 "end": {
-                    "line": 9,
+                    "line": 67,
                     "col": 45,
-                    "offset": 310
+                    "offset": 2010
                 },
                 "extra": {
                     "message": "Possible SQL injection. Use parameterized queries instead of string formatting.",
-                    "lines": "query = f\"SELECT * FROM users WHERE id = {user_input}\"",
+                    "lines": "query = f\"SELECT * FROM users WHERE email = '{email}' AND status = '{status}'\"",
                     "fix": "False",
                     "metadata": {
                         "category": "security",
-                        "technology": [
-                            "python"
-                        ],
+                        "technology": ["python"],
                         "likelihood": "HIGH",
                         "impact": "HIGH",
+                        "confidence": "HIGH",
+                        "vulnerability_class": ["SQL Injection"]
+                    },
+                    "severity": "ERROR",
+                    "fingerprint": "real-sql-injection-1"
+                },
+                "start_line": 67,
+                "end_line": 67,
+                "source_code": {
+                    "file_path": "src/database/user_repository.py",
+                    "start_line": 60,
+                    "end_line": 75,
+                    "vulnerable_lines": [
+                        "   60: class UserRepository:",
+                        "   61:     def __init__(self, db_connection):",
+                        "   62:         self.db = db_connection",
+                        "   63: ",
+                        "   64:     def find_users_by_criteria(self, email, status):",
+                        "   65:         # VULNERABLE: Direct string interpolation",
+                        "   66:         # This could allow SQL injection attacks",
+                        "   67:         query = f\"SELECT * FROM users WHERE email = '{email}' AND status = '{status}'\"",
+                        "   68:         ",
+                        "   69:         try:",
+                        "   70:             cursor = self.db.cursor()",
+                        "   71:             cursor.execute(query)",
+                        "   72:             return cursor.fetchall()",
+                        "   73:         except Exception as e:",
+                        "   74:             logger.error(f\"Database error: {e}\")",
+                        "   75:             return []"
+                    ],
+                    "context_lines": 5
+                }
+            },
+            # False Positive - Mock Code (Should be filtered out)
+            {
+                "check_id": "python.lang.security.audit.sql-injection.sql-injection",
+                "path": "tests/mocks/mock_user_service.py",
+                "start": {
+                    "line": 34,
+                    "col": 15,
+                    "offset": 890
+                },
+                "end": {
+                    "line": 34,
+                    "col": 45,
+                    "offset": 920
+                },
+                "extra": {
+                    "message": "Possible SQL injection. Use parameterized queries instead of string formatting.",
+                    "lines": "mock_query = f\"SELECT * FROM mock_users WHERE id = {mock_id}\"",
+                    "fix": "False",
+                    "metadata": {
+                        "category": "security",
+                        "technology": ["python"],
+                        "likelihood": "LOW",
+                        "impact": "NONE",
+                        "confidence": "LOW",
+                        "vulnerability_class": ["SQL Injection"]
+                    },
+                    "severity": "INFO",
+                    "fingerprint": "false-positive-mock-code-1"
+                },
+                "start_line": 34,
+                "end_line": 34,
+                "source_code": {
+                    "file_path": "tests/mocks/mock_user_service.py",
+                    "start_line": 30,
+                    "end_line": 40,
+                    "vulnerable_lines": [
+                        "   30: class MockUserService:",
+                        "   31:     def __init__(self):",
+                        "   32:         self.mock_users = [",
+                        "   33:         ",
+                        "   34:         mock_query = f\"SELECT * FROM mock_users WHERE id = {mock_id}\"  # Mock data",
+                        "   35:         ",
+                        "   36:         # This is completely safe - mock service only",
+                        "   37:         # Used for testing, never in production",
+                        "   38:         return self.mock_users.get(mock_id, None)",
+                        "   39:         ",
+                        "   40: "
+                    ],
+                    "context_lines": 5
+                }
+            },
+            # Real Security Issue - Path Traversal (Medium Risk)
+            {
+                "check_id": "python.lang.security.audit.path-traversal.path-traversal",
+                "path": "src/utils/file_handler.py",
+                "start": {
+                    "line": 89,
+                    "col": 25,
+                    "offset": 2456
+                },
+                "end": {
+                    "line": 89,
+                    "col": 55,
+                    "offset": 2486
+                },
+                "extra": {
+                    "message": "Possible path traversal. Use os.path.normpath() and os.path.abspath() to normalize and validate file paths.",
+                    "lines": "file_path = os.path.join(base_dir, user_filename)",
+                    "fix": "False",
+                    "metadata": {
+                        "category": "security",
+                        "technology": ["python"],
+                        "likelihood": "MEDIUM",
+                        "impact": "MEDIUM",
                         "confidence": "MEDIUM",
-                        "vulnerability_class": [
-                            "SQL Injection"
-                        ]
+                        "vulnerability_class": ["Path Traversal"]
                     },
                     "severity": "WARNING",
-                    "fingerprint": "sample-fingerprint-3"
+                    "fingerprint": "real-path-traversal-1"
                 },
-                "start_line": 9,
-                "end_line": 9,
+                "start_line": 89,
+                "end_line": 89,
                 "source_code": {
-                    "file_path": "test-files/test.py",
-                    "start_line": 9,
-                    "end_line": 9,
+                    "file_path": "src/utils/file_handler.py",
+                    "start_line": 85,
+                    "end_line": 95,
                     "vulnerable_lines": [
-                        "    7: def vulnerable_function(user_input):",
-                        "    8:     # SQL Injection vulnerability",
-                        "    9:     query = f\"SELECT * FROM users WHERE id = {user_input}\"",
-                        "   10:     os.system(f\"echo {user_input}\")  # Command injection",
-                        "   11:     subprocess.call(f\"ls {user_input}\", shell=True)"
+                        "   85: def process_user_file(user_filename, base_dir):",
+                        "   86:     # VULNERABLE: Potential path traversal",
+                        "   87:     # User could provide ../../../etc/passwd",
+                        "   88:     ",
+                        "   89:     file_path = os.path.join(base_dir, user_filename)",
+                        "   90:     ",
+                        "   91:     # No validation of final path",
+                        "   92:     if os.path.exists(file_path):",
+                        "   93:         with open(file_path, 'r') as f:",
+                        "   94:             return f.read()",
+                        "   95:     return None"
                     ],
                     "context_lines": 5
                 }
@@ -299,7 +448,12 @@ def create_sample_data() -> str:
         "errors": [],
         "paths": {
             "scanned": [
-                "test-files/test.py"
+                "src/api/user_controller.py",
+                "src/database/user_repository.py", 
+                "src/utils/file_handler.py",
+                "tests/test_mock_database.py",
+                "tests/mocks/mock_user_service.py",
+                "debug/debug_utils.py"
             ]
         },
         "time": {
@@ -353,89 +507,136 @@ def create_sample_data() -> str:
         return f.name
 
 def format_results(data: Dict[str, Any]) -> str:
-    """Format results for display."""
+    """Format results for display, showcasing sem.io's full capabilities."""
     if "error" in data:
         return f"**Error:** {data['error']}"
     
-    # Create summary
+    # Create comprehensive summary
     summary = f"""
 # sem.io Security Analysis Results
 
 **Upload ID:** {data.get('upload_id', 'N/A')}  
 **Timestamp:** {data.get('timestamp', 'N/A')}
 
-## Summary
+## 🎯 Analysis Summary
 
-- **Total Vulnerabilities:** {data.get('total_vulnerabilities', 0)}
-- **Error Severity (High/Critical):** {data.get('error_severity_count', 0)}
-- **Warning Severity (Medium):** {data.get('warning_severity_count', 0)}
-- **Info Severity (Low):** {data.get('info_severity_count', 0)}
-- **Unknown Severity:** {data.get('unknown_severity_count', 0)}
-- **Errors:** {len(data.get('errors', []))}
+- **Total Findings:** {data.get('total_vulnerabilities', 0)}
+- **High/Critical Severity:** {data.get('error_severity_count', 0)} 🔴
+- **Medium Severity:** {data.get('warning_severity_count', 0)} 🟡
+- **Low Severity:** {data.get('info_severity_count', 0)} 🟢
+- **Processing Errors:** {len(data.get('errors', []))}
 
-## Severity Distribution
+## 🧠 AI-Powered Analysis Features
+
+### False Positive Assessment
+sem.io automatically analyzes each finding to determine if it's a real security issue or a false positive based on:
+- **File context** (test files, mock code, debug code)
+- **Code patterns** (assertions, safe contexts)
+- **Business logic** (intentional security patterns)
+- **Historical data** (similar findings from past analyses)
+
+### Intelligent Risk Assessment
+Each vulnerability is evaluated for:
+- **Exploitability** (how easy to attack)
+- **Business impact** (what could be compromised)
+- **Code context** (production vs test code)
+- **Security patterns** (known safe vs dangerous patterns)
+
+## 📊 Detailed Breakdown
 """
     
+    # Add severity distribution
     severity_dist = data.get('summary', {}).get('severity_distribution', {})
-    for severity, count in severity_dist.items():
-        summary += f"- **{severity}:** {count}\n"
+    if severity_dist:
+        summary += "\n### Severity Distribution\n"
+        for severity, count in severity_dist.items():
+            emoji = "🔴" if severity in ["ERROR", "CRITICAL"] else "🟡" if severity == "WARNING" else "🟢"
+            summary += f"- **{severity}:** {count} {emoji}\n"
     
-    summary += "\n## Fix Types\n"
+    # Add fix types
     fix_types = data.get('summary', {}).get('fix_types', {})
-    for fix_type, count in fix_types.items():
-        summary += f"- **{fix_type}:** {count}\n"
+    if fix_types:
+        summary += "\n### Fix Types Generated\n"
+        for fix_type, count in fix_types.items():
+            summary += f"- **{fix_type}:** {count}\n"
     
     # Add code context information
     code_stats = data.get('summary', {}).get('code_context_stats', {})
     if code_stats:
-        summary += f"\n## Code Context Analysis\n"
-        summary += f"- **Findings with Code:** {code_stats.get('findings_with_code', 0)}\n"
-        summary += f"- **Findings without Code:** {code_stats.get('findings_without_code', 0)}\n"
+        summary += f"\n### Code Context Analysis\n"
+        summary += f"- **Files with context:** {code_stats.get('files_with_context', 0)}\n"
+        summary += f"- **Total context lines:** {code_stats.get('total_context_lines', 0)}\n"
+        summary += f"- **Average context per finding:** {code_stats.get('avg_context_lines', 0):.1f}\n"
     
-    # Add Semgrep recommendations
-    recommendations = data.get('summary', {}).get('semgrep_recommendations', [])
-    if recommendations:
-        summary += f"\n## Semgrep Recommendations\n"
-        for rec in recommendations:
-            summary += f"- {rec}\n"
-    
-    # Add findings and fixes
+    # Add findings details
     findings = data.get('findings', [])
-    fixes = data.get('fixes', [])
+    if findings:
+        summary += f"\n## 🔍 Individual Findings Analysis\n"
+        
+        for i, finding in enumerate(findings[:5], 1):  # Show first 5 findings
+            rule_id = finding.get('rule_id', 'Unknown')
+            severity = finding.get('severity', 'UNKNOWN')
+            message = finding.get('message', 'No description')
+            file_path = finding.get('path', 'Unknown file')
+            line_num = finding.get('start_line', 'Unknown')
+            
+            # Determine if this is likely a false positive
+            is_likely_fp = (
+                'test' in file_path.lower() or 
+                'mock' in file_path.lower() or 
+                'debug' in file_path.lower() or
+                severity in ['INFO', 'LOW']
+            )
+            
+            fp_indicator = "🟢 (Likely False Positive)" if is_likely_fp else "🔴 (Real Security Issue)"
+            severity_emoji = "🔴" if severity in ["ERROR", "CRITICAL"] else "🟡" if severity == "WARNING" else "🟢"
+            
+            summary += f"\n### Finding {i}: {rule_id} {severity_emoji}\n"
+            summary += f"- **File:** `{file_path}:{line_num}`\n"
+            summary += f"- **Severity:** {severity} {fp_indicator}\n"
+            summary += f"- **Description:** {message}\n"
+            
+            # Add code context if available
+            if finding.get('code'):
+                summary += f"- **Vulnerable Code:** `{finding['code']}`\n"
     
-    if findings and fixes:
-        summary += "\n## Vulnerabilities and Fixes\n\n"
-        for i, (finding, fix) in enumerate(zip(findings, fixes), 1):
-            confidence = f"{fix.get('confidence_score', 0) * 100:.1f}%"
-            summary += f"""
-### {i}. {finding.get('rule_id', 'Unknown Rule')}
+    # Add fixes information
+    fixes = data.get('fixes', [])
+    if fixes:
+        summary += f"\n## 🛠️ AI-Generated Fixes\n"
+        summary += f"sem.io has generated **{len(fixes)}** intelligent fixes for the identified vulnerabilities.\n"
+        
+        for i, fix in enumerate(fixes[:3], 1):  # Show first 3 fixes
+            fix_type = fix.get('fix_type', 'Unknown')
+            confidence = fix.get('confidence_score', 0)
+            explanation = fix.get('explanation', 'No explanation provided')
+            
+            summary += f"\n### Fix {i}: {fix_type}\n"
+            summary += f"- **Confidence:** {confidence:.1%}\n"
+            summary += f"- **Explanation:** {explanation}\n"
+    
+    # Add agentic analysis summary
+    summary += f"""
+## 🤖 Agentic AI Analysis
 
-**File:** `{finding.get('path', 'N/A')}`  
-**Line:** {finding.get('start_line', 'N/A')}  
-**Severity:** {finding.get('severity', 'N/A')}  
-**Confidence:** {confidence}
+sem.io uses advanced AI to:
+- **Automatically assess** false positive likelihood
+- **Generate context-aware** security fixes
+- **Prioritize findings** by business impact
+- **Provide actionable** remediation steps
+- **Track decision history** for audit purposes
 
-**Vulnerable Code:**
-```python
-{finding.get('code', 'No code snippet available from Semgrep report')}
-```
+## 📈 Next Steps
 
-**Suggested Fix:**
-```python
-{fix.get('suggested_fix', 'N/A')}
-```
-
-**Explanation:** {fix.get('explanation', 'N/A')}
+1. **Review high-severity findings** (marked with 🔴)
+2. **Verify false positive assessments** (marked with 🟢)
+3. **Implement AI-generated fixes** for real vulnerabilities
+4. **Use generated reports** for team communication
+5. **Integrate with CI/CD** for automated security scanning
 
 ---
+*Analysis powered by sem.io - AI Security Analysis Agent*
 """
-    
-    # Add errors if any
-    errors = data.get('errors', [])
-    if errors:
-        summary += "\n## Errors\n\n"
-        for error in errors:
-            summary += f"- **{error.get('finding_id', 'Unknown')}** ({error.get('file', 'Unknown')}): {error.get('error', 'Unknown error')}\n"
     
     return summary
 
@@ -677,7 +878,6 @@ def create_dashboard():
                     <div class="benefit-item">• <strong>Automated Scanning:</strong> Your CI/CD pipeline automatically triggers security scans on every code commit</div>
                     <div class="benefit-item">• <strong>AI Analysis:</strong> sem.io receives scan results and uses AI to separate real threats from false alarms</div>
                     <div class="benefit-item">• <strong>Actionable Insights:</strong> Provides prioritized, context-aware recommendations that developers can implement immediately</div>
-                    <div class="benefit-item">• <strong>Continuous Learning:</strong> Improves accuracy over time by learning from your codebase patterns</div>
                 </div>
                 
                 <div class="hero-quote">
@@ -704,11 +904,27 @@ def create_dashboard():
                     # Sample data button
                     sample_btn = gr.Button("Load Sample Data", elem_classes=["secondary-button"])
                     
+                    # Demo description
+                    gr.HTML("""
+                    <div style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin: 8px 0; font-size: 0.9rem;">
+                        <strong>🎯 Enhanced Demo Features:</strong><br>
+                        • <strong>Real vulnerabilities</strong> in production code<br>
+                        • <strong>False positive detection</strong> in test/mock files<br>
+                        • <strong>AI-powered analysis</strong> with context awareness<br>
+                        • <strong>Intelligent risk assessment</strong> and prioritization
+                    </div>
+                    """)
+                    
                     # Analyze button
                     analyze_btn = gr.Button("Analyze Vulnerabilities", elem_classes=["action-button"], size="lg")
                     
-                    # Instructions text
-                    gr.HTML('<p style="margin-top: 1rem; color: #4a5568; font-style: italic; text-align: center;">Upload a Semgrep JSON file and click "Analyze Vulnerabilities" to get started.</p>')
+                    # Instructions text inside the upload section
+                    gr.HTML("""
+                    <p style="color: #4a5568; font-style: italic; text-align: center; margin-top: 1rem;">
+                        Upload a Semgrep JSON file and click 'Analyze Vulnerabilities' to get started.<br>
+                        <strong>💡 Pro Tip:</strong> Try the "Load Sample Data" button to see sem.io's full capabilities in action!
+                    </p>
+                    """)
                 
                 # Status
                 status_output = gr.Textbox(
