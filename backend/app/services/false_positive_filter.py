@@ -4,7 +4,7 @@ False Positive Filter - Combines rule-based and LLM-based analysis to identify l
 
 import re
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
 import logging
 
