@@ -81,9 +81,8 @@ This leads to:
 
 ## Testing the Demo
 
-1. **Show Code Context Demo:** Click this button to see how sem.io extracts context
-2. **Load Sample Data:** Load the Semgrep scan results
-3. **Analyze Vulnerabilities:** Process the findings with real code context
-4. **Review Results:** See how context improves analysis quality
+1. **Load Sample Data:** Load the Semgrep scan results
+2. **Analyze Vulnerabilities:** Process the findings with real code context
+3. **Review Results:** See how context improves analysis quality
 
 The demo shows the **real power** of sem.io - it doesn't just scan, it **understands your code**.

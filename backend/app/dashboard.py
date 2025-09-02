@@ -125,69 +125,6 @@ def generate_report(data: Dict[str, Any], format_type: str) -> str:
         print(f"Report generation error: {error_details}")
         return f"Error generating {format_type} report: {str(e)}"
 
-def demonstrate_code_context_extraction():
-    """Demonstrate how sem.io actually reads code files to extract context."""
-    demo_files = [
-        "demo_code/user_controller.py",
-        "demo_code/user_repository.py", 
-        "demo_code/test_mock_database.py"
-    ]
-    
-    context_demo = """
-## How sem.io Extracts Code Context
-
-sem.io doesn't just rely on static data - it **actually reads your codebase** to understand context. Here's how it works:
-
-### 1. Finding Analysis
-When sem.io receives a Semgrep finding like:
-- **File:** `demo_code/user_controller.py:15`
-- **Issue:** Command injection via `shell=True`
-
-### 2. Code Context Extraction
-sem.io reads the actual file and extracts context around line 15:
-
-```python
-# Reading file: demo_code/user_controller.py
-def process_user_command(user_input):
-    # Process user command - VULNERABLE
-    if not user_input:
-        return "No input provided"
-    
-    # VULNERABLE: Command injection via shell=True
-    subprocess.call(f"ls {user_input}", shell=True)  # Command injection
-    
-    # More processing...
-    result = process_result(user_input)
-    return result
-```
-
-### 3. Context-Aware Analysis
-sem.io analyzes:
-- **Function context:** This is a user input processing function
-- **Business logic:** Handles user commands
-- **Security patterns:** Uses dangerous `shell=True`
-- **Code structure:** Part of production code (not test/mock)
-
-### 4. False Positive Detection
-For test files like `demo_code/test_mock_database.py:23`:
-- **File context:** `test_` prefix indicates test code
-- **Code analysis:** Mock database operations
-- **Risk assessment:** Safe in test environment
-- **Decision:** Likely false positive
-
-### 5. AI-Powered Fix Generation
-Using the extracted context, sem.io generates:
-- **Context-aware fixes** that fit your codebase
-- **Business logic preservation** 
-- **Security best practices** implementation
-- **Confidence scoring** based on context quality
-
----
-**This is the real power of sem.io - it doesn't just scan, it understands your code.**
-"""
-    
-    return context_demo
-
 def create_sample_data() -> str:
     """Create comprehensive sample Semgrep JSON data showcasing sem.io's full capabilities."""
     sample_data = {
@@ -245,22 +182,38 @@ def create_sample_data() -> str:
                         "   20: "
                     ],
                     "context_lines": 5
+                },
+                "false_positive_analysis": {
+                    "is_likely_false_positive": False,
+                    "confidence_score": 0.15,
+                    "validation_details": {
+                        "rule_based_analysis": {
+                            "score": 0.15,
+                            "matches": [],
+                            "passed": False
+                        },
+                        "llm_analysis": {
+                            "score": 0.0,
+                            "analysis": None,
+                            "used": False,
+                            "passed": False
+                        },
+                        "test_file_detected": False,
+                        "mock_code_detected": False,
+                        "debug_code_detected": False,
+                        "high_confidence_rule": False,
+                        "final_score": 0.15,
+                        "confidence_score": 0.15
+                    },
+                    "reasoning": "No specific false positive indicators found.\nLow confidence (15.0%) - manual review recommended."
                 }
             },
             # False Positive - Test File (Should be filtered out)
             {
                 "check_id": "python.lang.security.audit.sql-injection.sql-injection",
                 "path": "demo_code/test_mock_database.py",
-                "start": {
-                    "line": 23,
-                    "col": 15,
-                    "offset": 580
-                },
-                "end": {
-                    "line": 23,
-                    "col": 45,
-                    "offset": 610
-                },
+                "start": {"line": 23, "col": 15, "offset": 580},
+                "end": {"line": 23, "col": 45, "offset": 610},
                 "extra": {
                     "message": "Possible SQL injection. Use parameterized queries instead of string formatting.",
                     "lines": "query = f\"SELECT * FROM mock_users WHERE id = {test_id}\"",
@@ -296,6 +249,30 @@ def create_sample_data() -> str:
                         "   30: "
                     ],
                     "context_lines": 5
+                },
+                "false_positive_analysis": {
+                    "is_likely_false_positive": True,
+                    "confidence_score": 0.85,
+                    "validation_details": {
+                        "rule_based_analysis": {
+                            "score": 0.85,
+                            "matches": ["test_files: test_.*\\.py$", "test_context"],
+                            "passed": True
+                        },
+                        "llm_analysis": {
+                            "score": 0.0,
+                            "analysis": None,
+                            "used": False,
+                            "passed": False
+                        },
+                        "test_file_detected": True,
+                        "mock_code_detected": False,
+                        "debug_code_detected": False,
+                        "high_confidence_rule": False,
+                        "final_score": 0.85,
+                        "confidence_score": 0.85
+                    },
+                    "reasoning": "Rule-based analysis identified 2 indicators:\n  • test_files: test_.*\\.py$\n  • test_context\nThis finding is in test code, which is typically safe from exploitation.\nModerate confidence (85.0%) that this is a false positive."
                 }
             },
             # Real Security Issue - SQL Injection (High Risk)
@@ -486,13 +463,18 @@ Each vulnerability is evaluated for:
             file_path = finding.get('path', 'Unknown file')
             line_num = finding.get('start_line', 'Unknown')
             
-            # Determine if this is likely a false positive
-            is_likely_fp = (
-                'test' in file_path.lower() or 
-                'mock' in file_path.lower() or 
-                'debug' in file_path.lower() or
-                severity in ['INFO', 'LOW']
-            )
+            # Check for enhanced false positive analysis
+            fp_analysis = finding.get('false_positive_analysis', {})
+            is_likely_fp = fp_analysis.get('is_likely_false_positive', False)
+            
+            # Fallback to basic detection if no enhanced analysis
+            if not fp_analysis:
+                is_likely_fp = (
+                    'test' in file_path.lower() or 
+                    'mock' in file_path.lower() or 
+                    'debug' in file_path.lower() or
+                    severity in ['INFO', 'LOW']
+                )
             
             fp_indicator = "(Likely False Positive)" if is_likely_fp else "(Real Security Issue)"
             severity_indicator = "[HIGH]" if severity in ["ERROR", "CRITICAL"] else "[MEDIUM]" if severity == "WARNING" else "[LOW]"
@@ -501,6 +483,19 @@ Each vulnerability is evaluated for:
             summary += f"- **File:** `{file_path}:{line_num}`\n"
             summary += f"- **Severity:** {severity} {fp_indicator}\n"
             summary += f"- **Description:** {message}\n"
+            
+            # Add enhanced false positive reasoning if available
+            if fp_analysis and fp_analysis.get('reasoning'):
+                summary += f"- **False Positive Analysis:**\n"
+                reasoning = fp_analysis.get('reasoning', '')
+                for line in reasoning.split('\n'):
+                    if line.strip():
+                        summary += f"  - {line.strip()}\n"
+                
+                # Add confidence score
+                confidence = fp_analysis.get('confidence_score', 0)
+                if confidence > 0:
+                    summary += f"  - **Confidence:** {confidence:.1%}\n"
             
             # Add code context if available
             if finding.get('code'):
@@ -531,6 +526,27 @@ sem.io uses advanced AI to:
 - **Prioritize findings** by business impact
 - **Provide actionable** remediation steps
 - **Track decision history** for audit purposes
+
+## Enhanced False Positive Detection
+
+sem.io now provides **detailed reasoning** for why findings are classified as false positives:
+
+### Rule-Based Analysis
+- **File patterns:** Detects test files, mock code, debug code
+- **Code context:** Analyzes function names, variable usage, comments
+- **High-confidence rules:** Matches known false positive patterns
+
+### AI-Powered Analysis
+- **LLM validation:** Uses AI to analyze ambiguous cases
+- **Context understanding:** Reads actual code to understand business logic
+- **Confidence scoring:** Provides percentage-based confidence levels
+
+### Detailed Reasoning
+Each false positive classification includes:
+- **Specific indicators** that triggered the classification
+- **Confidence scores** with explanations
+- **Context flags** (test code, mock code, debug code)
+- **AI-generated insights** for complex cases
 
 ## Next Steps
 
@@ -785,7 +801,6 @@ def create_dashboard():
                     <div class="benefit-item">• <strong>AI Analysis:</strong> sem.io receives scan results and uses AI to separate real threats from false alarms</div>
                     <div class="benefit-item">• <strong>Actionable Insights:</strong> Provides prioritized, context-aware recommendations that developers can implement immediately</div>
                 </div>
-                
                 <div class="hero-quote">
                     Think of it as having a security expert who takes the raw output from your security tools and transforms it into clear, actionable intelligence that your team can trust and act upon.
                 </div>
@@ -810,28 +825,13 @@ def create_dashboard():
                     # Sample data button
                     sample_btn = gr.Button("Load Sample Data", elem_classes=["secondary-button"])
                     
-                    # Demo description
-                    gr.HTML("""
-                    <div style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin: 8px 0; font-size: 0.9rem;">
-                        <strong>Enhanced Demo Features:</strong><br>
-                        • <strong>Real vulnerable code files</strong> that sem.io actually reads<br>
-                        • <strong>Live code context extraction</strong> from your codebase<br>
-                        • <strong>False positive detection</strong> based on file analysis<br>
-                        • <strong>AI-powered analysis</strong> with real code understanding
-                    </div>
-                    """)
-                    
-                    # Code context demo button
-                    context_btn = gr.Button("Show Code Context Demo", elem_classes=["secondary-button"])
-                    
                     # Analyze button
                     analyze_btn = gr.Button("Analyze Vulnerabilities", elem_classes=["action-button"], size="lg")
                     
                     # Instructions text inside the upload section
                     gr.HTML("""
                     <p style="color: #4a5568; font-style: italic; text-align: center; margin-top: 1rem;">
-                        Upload a Semgrep JSON file and click 'Analyze Vulnerabilities' to get started.<br>
-                        <strong>Pro Tip:</strong> Click "Show Code Context Demo" to see how sem.io actually reads your code!
+                        Upload a Semgrep JSON file and click 'Analyze Vulnerabilities' to get started.
                     </p>
                     """)
                 
@@ -890,10 +890,56 @@ def create_dashboard():
             if "error" in result:
                 return f"**Error:** {result['error']}", {}
             
-            # Format results for display
+            # First, display explanation of sem.io's analysis process
+            analysis_explanation = """
+# How sem.io Analyzes Your Security Scan Results
+
+## 1. Finding Analysis & Code Context Extraction
+sem.io doesn't just read static scan results - it **actually reads your codebase** to understand the full context of each vulnerability:
+
+- **File Reading:** Extracts ±10 lines around each finding for complete context
+- **Function Analysis:** Understands the business logic and security implications
+- **Code Structure:** Identifies test files, mock code, and production code
+- **Variable Context:** Analyzes how user input flows through your application
+
+## 2. Context-Aware Analysis
+Using the extracted code context, sem.io performs intelligent analysis:
+
+- **Business Logic Understanding:** Determines if code is in production or test environments
+- **Security Pattern Recognition:** Identifies known safe vs. dangerous patterns
+- **Input Flow Analysis:** Tracks how untrusted data moves through your code
+- **Risk Assessment:** Evaluates exploitability and business impact
+
+## 3. False Positive Detection
+sem.io uses a hybrid approach to filter out noise:
+
+- **Rule-Based Filtering:** Detects test files, mock code, debug code, and known safe patterns
+- **AI-Powered Analysis:** Uses LLM to analyze ambiguous cases with full code context
+- **Confidence Scoring:** Provides percentage-based confidence for each classification
+- **Detailed Reasoning:** Explains exactly why each finding is classified as true positive or false positive
+
+## 4. Fix Generation & Validation
+For real vulnerabilities, sem.io generates intelligent fixes:
+
+- **Context-Aware Fixes:** Solutions that fit your specific codebase and business logic
+- **Security Best Practices:** Implements industry-standard security patterns
+- **Syntax Validation:** Ensures generated code compiles and follows your coding standards
+- **Confidence Scoring:** Rates each fix based on validation success and context quality
+
+---
+
+## Analysis Results (Exact CLI Format)
+Below is the exact report format that sem.io CLI returns in your pipeline:
+
+"""
+            
+            # Format results for display (this will show the CLI format)
             formatted_results = format_results(result)
             
-            return formatted_results, result
+            # Combine explanation with results
+            full_output = analysis_explanation + formatted_results
+            
+            return full_output, result
         
         def load_sample_data():
             sample_file = create_sample_data()
@@ -942,11 +988,6 @@ def create_dashboard():
             outputs=[file_input, status_output, file_info]
         )
         
-        context_btn.click(
-            lambda: demonstrate_code_context_extraction(),
-            outputs=[results_output]
-        )
-        
         # Update file info when file is uploaded
         file_input.change(
             update_file_info,
@@ -991,14 +1032,15 @@ def create_dashboard():
             </div>
             
             <div class="section-header" style="margin-top: 2rem;">Testing</div>
-            <p style="color: #4a5568;">Click "Show Code Context Demo" to see how sem.io actually reads your codebase:</p>
+            <p style="color: #4a5568;">Click "Load Sample Data" to test with the enhanced vulnerability scan results including false positive analysis:</p>
             <ul style="color: #4a5568; margin-left: 2rem;">
                 <li><strong>Real code files:</strong> sem.io reads actual Python files in the demo_code/ directory</li>
                 <li><strong>Context extraction:</strong> Shows how sem.io extracts code around vulnerable lines</li>
-                <li><strong>False positive detection:</strong> Demonstrates analysis of test vs production code</li>
+                <li><strong>Enhanced false positive detection:</strong> Demonstrates detailed reasoning for classifications</li>
                 <li><strong>AI understanding:</strong> Shows how context improves AI analysis quality</li>
+                <li><strong>Confidence scoring:</strong> See percentage-based confidence for all decisions</li>
             </ul>
-            <p style="color: #4a5568; margin-top: 1rem;">Click "Load Sample Data" to test with the enhanced vulnerability scan results.</p>
+            <p style="color: #4a5568; margin-top: 1rem;">Click "Analyze Vulnerabilities" to see the complete analysis process and exact CLI report format.</p>
         </div>
         """)
     
