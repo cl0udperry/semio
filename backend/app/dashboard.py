@@ -774,6 +774,174 @@ def create_dashboard():
             margin: 1rem 0;
             border: 1px solid #e2e8f0;
         }
+        
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2rem !important;
+                line-height: 1.2;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem !important;
+                padding: 0 1rem;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: center;
+            }
+            
+            .hero-stats {
+                flex-direction: column;
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1rem;
+                margin: 1.5rem 0;
+            }
+            
+            .feature-card {
+                padding: 1.5rem;
+                margin: 0.5rem;
+            }
+            
+            .feature-title {
+                font-size: 1.1rem;
+            }
+            
+            .feature-desc {
+                font-size: 0.9rem;
+            }
+            
+            .benefits-section {
+                padding: 1.5rem;
+                margin-top: 1.5rem;
+            }
+            
+            .benefits-title {
+                font-size: 1.2rem;
+            }
+            
+            .benefit-item {
+                font-size: 0.9rem;
+                margin-bottom: 0.8rem;
+            }
+            
+            .hero-quote {
+                font-size: 0.9rem;
+                padding: 1rem;
+            }
+            
+            .gradio-row {
+                padding: 1rem;
+                margin: 0.5rem 0;
+            }
+            
+            .section-header {
+                font-size: 1.5rem;
+                padding: 0 1rem;
+            }
+            
+            /* Make Gradio components mobile-friendly */
+            .gradio-container {
+                padding: 0.5rem !important;
+            }
+            
+            .gradio-button {
+                width: 100% !important;
+                margin: 0.5rem 0 !important;
+            }
+            
+            .gradio-file {
+                width: 100% !important;
+            }
+            
+            .gradio-textbox {
+                width: 100% !important;
+            }
+            
+            .gradio-markdown {
+                width: 100% !important;
+                padding: 0.5rem !important;
+            }
+            
+            /* Mobile responsive layout */
+            .mobile-responsive-row {
+                flex-direction: column !important;
+                gap: 1rem !important;
+            }
+            
+            .mobile-responsive-column {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: none !important;
+            }
+            
+            /* Make upload container mobile-friendly */
+            .upload-container {
+                padding: 1rem !important;
+                margin: 0.5rem !important;
+            }
+            
+            /* Mobile responsive markdown */
+            .mobile-responsive-markdown {
+                width: 100% !important;
+                padding: 0.5rem !important;
+                font-size: 0.9rem !important;
+                line-height: 1.4 !important;
+            }
+            
+            .mobile-responsive-markdown h1,
+            .mobile-responsive-markdown h2,
+            .mobile-responsive-markdown h3 {
+                font-size: 1.2rem !important;
+                margin: 1rem 0 0.5rem 0 !important;
+            }
+            
+            .mobile-responsive-markdown p {
+                margin: 0.5rem 0 !important;
+            }
+            
+            .mobile-responsive-markdown pre {
+                font-size: 0.8rem !important;
+                padding: 0.5rem !important;
+                overflow-x: auto !important;
+            }
+            
+            /* Ensure iframe is responsive */
+            iframe {
+                width: 100% !important;
+                height: auto !important;
+                min-height: 400px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 1.5rem !important;
+            }
+            
+            .hero-subtitle {
+                font-size: 0.9rem !important;
+            }
+            
+            .feature-card {
+                padding: 1rem;
+            }
+            
+            .benefits-section {
+                padding: 1rem;
+            }
+            
+            .gradio-row {
+                padding: 0.5rem;
+            }
+        }
         """
     ) as dashboard:
         
@@ -822,8 +990,8 @@ def create_dashboard():
         with gr.Row():
             gr.HTML('<div class="section-header">Security Analysis Engine</div>')
         
-        with gr.Row():
-            with gr.Column(scale=1):
+        with gr.Row(elem_classes=["mobile-responsive-row"]):
+            with gr.Column(scale=1, elem_classes=["mobile-responsive-column"]):
                 # File upload section - using proper Gradio components with CSS styling
                 with gr.Group(elem_classes=["upload-container"]):
                     file_input = gr.File(
@@ -859,12 +1027,13 @@ def create_dashboard():
                     value="No file uploaded"
                 )
             
-            with gr.Column(scale=2):
-                # Results display
-                results_output = gr.Markdown(
-                    label="Analysis Results",
-                    value=""
-                )
+             with gr.Column(scale=2, elem_classes=["mobile-responsive-column"]):
+                 # Results display
+                 results_output = gr.Markdown(
+                     label="Analysis Results",
+                     value="",
+                     elem_classes=["mobile-responsive-markdown"]
+                 )
         
         # Store current analysis data
         current_data = gr.State({})
