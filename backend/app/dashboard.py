@@ -1027,7 +1027,7 @@ def create_dashboard():
                     value="No file uploaded"
                 )
             
-             with gr.Column(scale=2, elem_classes=["mobile-responsive-column"]):
+            with gr.Column(scale=2, elem_classes=["mobile-responsive-column"]):
                  # Results display
                  results_output = gr.Markdown(
                      label="Analysis Results",
