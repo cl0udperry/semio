@@ -78,35 +78,122 @@ def analyze_semgrep_file(file) -> Dict[str, Any]:
         print(f"Data keys: {list(semgrep_data.keys()) if isinstance(semgrep_data, dict) else 'Not a dict'}")
         print(f"Data preview: {str(semgrep_data)[:200]}...")
         
-        # Make API request with UI headers
-        headers = {
-            "Content-Type": "application/json",
-            "X-sem.io-UI": "gradio-dashboard",
-            "User-Agent": "sem.io-Gradio-Dashboard/1.0"
-        }
-        
-        print("Making request to public endpoint...")
-        response = requests.post(
-            f"{get_api_url()}/api/review-public",
-            json=semgrep_data,
-            headers=headers,
-            timeout=300  # 5 minutes timeout
-        )
-        
-        if response.status_code == 200:
-            return response.json()
-        elif response.status_code == 429:
-            return {"error": "Rate limit exceeded. Please try again later."}
-        elif response.status_code == 403:
-            return {"error": "Access denied. This endpoint can only be accessed through the Semio dashboard."}
-        else:
-            return {"error": f"API Error: {response.status_code} - {response.text}"}
+        # Perform local analysis instead of API call
+        return perform_local_analysis(semgrep_data)
             
     except Exception as e:
         import traceback
         error_details = traceback.format_exc()
         print(f"Error details: {error_details}")
         return {"error": f"Error: {str(e)}\n\nDebug info: {error_details}"}
+
+def perform_local_analysis(semgrep_data):
+    """Perform local analysis of Semgrep data."""
+    try:
+        results = semgrep_data.get('results', [])
+        
+        if not results:
+            return {
+                "summary": {
+                    "total_findings": 0,
+                    "high_severity": 0,
+                    "medium_severity": 0,
+                    "low_severity": 0,
+                    "false_positives": 0
+                },
+                "findings": [],
+                "analysis_metadata": {
+                    "analysis_type": "local_demo",
+                    "timestamp": datetime.now().isoformat(),
+                    "version": "1.0.0"
+                }
+            }
+        
+        # Analyze each finding
+        analyzed_findings = []
+        false_positive_count = 0
+        
+        for finding in results:
+            # Basic analysis
+            severity = finding.get('extra', {}).get('severity', 'INFO')
+            rule_id = finding.get('check_id', 'unknown')
+            file_path = finding.get('path', 'unknown')
+            
+            # Simple false positive detection
+            is_false_positive = detect_simple_false_positive(finding)
+            if is_false_positive:
+                false_positive_count += 1
+            
+            # Create analyzed finding
+            analyzed_finding = {
+                "rule_id": rule_id,
+                "file_path": file_path,
+                "severity": severity,
+                "message": finding.get('extra', {}).get('message', ''),
+                "line": finding.get('start', {}).get('line', 0),
+                "is_false_positive": is_false_positive,
+                "confidence_score": 0.8 if is_false_positive else 0.2,
+                "false_positive_reasoning": get_false_positive_reasoning(finding) if is_false_positive else None
+            }
+            
+            analyzed_findings.append(analyzed_finding)
+        
+        # Calculate summary
+        high_severity = sum(1 for f in analyzed_findings if f['severity'] == 'ERROR' and not f['is_false_positive'])
+        medium_severity = sum(1 for f in analyzed_findings if f['severity'] == 'WARNING' and not f['is_false_positive'])
+        low_severity = sum(1 for f in analyzed_findings if f['severity'] == 'INFO' and not f['is_false_positive'])
+        
+        return {
+            "summary": {
+                "total_findings": len(results),
+                "high_severity": high_severity,
+                "medium_severity": medium_severity,
+                "low_severity": low_severity,
+                "false_positives": false_positive_count
+            },
+            "findings": analyzed_findings,
+            "analysis_metadata": {
+                "analysis_type": "local_demo",
+                "timestamp": datetime.now().isoformat(),
+                "version": "1.0.0"
+            }
+        }
+        
+    except Exception as e:
+        return {"error": f"Local analysis failed: {str(e)}"}
+
+def detect_simple_false_positive(finding):
+    """Simple false positive detection based on common patterns."""
+    file_path = finding.get('path', '').lower()
+    rule_id = finding.get('check_id', '').lower()
+    message = finding.get('extra', {}).get('message', '').lower()
+    
+    # Test files
+    if any(pattern in file_path for pattern in ['test', 'spec', 'mock', 'demo']):
+        return True
+    
+    # Common false positive patterns
+    if any(pattern in message for pattern in ['test', 'example', 'demo', 'mock']):
+        return True
+    
+    # Specific rule patterns
+    if 'sql-injection' in rule_id and 'test' in file_path:
+        return True
+    
+    return False
+
+def get_false_positive_reasoning(finding):
+    """Get reasoning for false positive detection."""
+    file_path = finding.get('path', '').lower()
+    
+    if 'test' in file_path:
+        return "This finding is in test code, which is typically safe from exploitation."
+    elif 'demo' in file_path:
+        return "This finding is in demo/example code, which is not production code."
+    elif 'mock' in file_path:
+        return "This finding is in mock code, which is used for testing purposes only."
+    else:
+        return "This finding appears to be a false positive based on code context."
 
 def generate_report(data: Dict[str, Any], format_type: str) -> str:
     """Generate report in specified format."""
