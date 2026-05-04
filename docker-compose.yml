@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: semio
+      POSTGRES_PASSWORD: semio
+      POSTGRES_DB: semio
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U semio"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      USE_SQLITE: "False"
+      DATABASE_URL: postgresql://semio:semio@db:5432/semio
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-in-production}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      DEBUG: "False"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

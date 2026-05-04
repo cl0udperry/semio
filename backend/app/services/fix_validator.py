@@ -44,9 +44,9 @@ class FixValidator:
         self.security_patterns = {
             'python': {
                 'sql_injection': [
-                    r'execute\s*\(\s*[\'"][^\'"]*\+',
-                    r'cursor\.execute\s*\(\s*[\'"][^\'"]*\+',
-                    r'query\s*=\s*[\'"][^\'"]*\+'
+                    r'execute\s*\(.*[\'"].*\+',
+                    r'query\s*=\s*[\'"].*\+',
+                    r'execute\s*\(\s*f[\'"]',
                 ],
                 'xss': [
                     r'\.innerHTML\s*=',
