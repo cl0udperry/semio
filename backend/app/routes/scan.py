@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.services.semgrep_parser import parse_semgrep_json
+from app.services.scanner_parsers import detect_and_parse, detect_scanner
 from app.services.llm_recommender import generate_fixes
 from app.services.auth_service import get_current_user
 from app.models.database_models import User
@@ -21,7 +21,11 @@ async def handle_scan(
     Process Semgrep scan results and generate fixes.
     Requires authentication.
     """
-    parsed_issues = parse_semgrep_json(data)
+    try:
+        parsed_issues = detect_and_parse(data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    scanner = detect_scanner(data)
     response = generate_fixes(parsed_issues, tier=current_user.tier)
-    return {"fixes": response}
+    return {"scanner": scanner, "fixes": response}
     

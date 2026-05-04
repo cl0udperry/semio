@@ -213,42 +213,32 @@ class FalsePositiveFilter:
     def _llm_based_analysis(self, finding: Dict) -> Tuple[float, Optional[str]]:
         """
         Perform LLM-based false positive analysis
-        
+
         Returns:
             Tuple of (score, analysis text)
         """
         try:
-            # Get LLM client (using shared client for now)
             llm_client = get_llm_client(UserTier.FREE)
             if not llm_client:
                 return 0.5, "LLM not available"
-            
-            # Build prompt for false positive analysis
+
             prompt = self._build_fp_analysis_prompt(finding)
-            
-            messages = [
-                {
-                    "role": "system",
-                    "content": "You are a security expert specializing in identifying false positives in static analysis results. Analyze the given finding and determine if it's likely a false positive."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-            
-            response = llm_client.chat.completions.create(
-                model="gemini-2.0-flash",
-                messages=messages
+
+            message = llm_client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=512,
+                system=(
+                    "You are a security expert specializing in identifying false positives "
+                    "in static analysis results. Analyze the given finding and determine if "
+                    "it is likely a false positive."
+                ),
+                messages=[{"role": "user", "content": prompt}],
             )
-            
-            analysis = response.choices[0].message.content
-            
-            # Extract confidence score from response
+
+            analysis = message.content[0].text
             score = self._extract_confidence_from_llm_response(analysis)
-            
             return score, analysis
-            
+
         except Exception as e:
             logger.error(f"Error in LLM-based FP analysis: {e}")
             return 0.5, f"LLM analysis failed: {e}"

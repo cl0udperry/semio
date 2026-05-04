@@ -8,7 +8,8 @@ from typing import Dict, List, Optional, Tuple
 import ast
 import re
 
-from .semgrep_parser import parse_semgrep_json, extract_context_for_fix
+from .scanner_parsers import detect_and_parse, detect_scanner
+from .semgrep_parser import extract_context_for_fix
 from .llm_recommender import generate_fixes
 from .false_positive_filter import FalsePositiveFilter
 from .fix_validator import FixValidator
@@ -48,11 +49,12 @@ class SemioAgenticCore:
         Returns:
             List of agent decisions with recommended actions
         """
-        logger.info("Starting agentic processing of Semgrep findings")
-        
+        scanner = detect_scanner(semgrep_json)
+        logger.info(f"Starting agentic processing ({scanner} format)")
+
         # Step 1: Parse and extract context
-        findings = parse_semgrep_json(semgrep_json, include_code_context=True)
-        logger.info(f"Parsed {len(findings)} findings from Semgrep output")
+        findings = detect_and_parse(semgrep_json)
+        logger.info(f"Parsed {len(findings)} findings from {scanner} output")
         
         decisions = []
         
