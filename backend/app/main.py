@@ -4,6 +4,7 @@ from fastapi.responses import RedirectResponse
 from app.routes.scan import router as scan_router
 from app.routes.review import router as review_router
 from app.routes.auth import router as auth_router
+from app.routes.projects import router as projects_router
 from app.database import init_db
 import time
 
@@ -81,6 +82,7 @@ async def rate_limit_middleware_wrapper(request: Request, call_next):
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(scan_router, prefix="/api", tags=["API"])
 app.include_router(review_router, prefix="/api", tags=["API"])
+app.include_router(projects_router, prefix="/api", tags=["Projects"])
 
 # Import and include agentic AI router
 from app.routes.agentic import router as agentic_router

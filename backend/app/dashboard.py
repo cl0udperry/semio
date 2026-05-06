@@ -410,21 +410,15 @@ def format_results(data: Dict[str, Any]) -> str:
 - **Low Severity:** {data.get('info_severity_count', 0)}
 - **Processing Errors:** {len(data.get('errors', []))}
 
-## AI-Powered Analysis Features
+## AI Triage
 
-### False Positive Assessment
-sem.io automatically analyzes each finding to determine if it's a real security issue or a false positive based on:
-- **File context** (test files, mock code, debug code)
-- **Code patterns** (assertions, safe contexts)
-- **Business logic** (intentional security patterns)
-- **Historical data** (similar findings from past analyses)
+Each finding is classified as one of:
+- **AUTO_FIX** — high-confidence fix, low risk of incorrect change
+- **SUGGEST** — fix suggested, human should review before applying
+- **MANUAL_REVIEW** — low confidence; requires a developer to assess
+- **SUPPRESS** — likely not production-relevant (test file, debug code, etc.)
 
-### Intelligent Risk Assessment
-Each vulnerability is evaluated for:
-- **Exploitability** (how easy to attack)
-- **Business impact** (what could be compromised)
-- **Code context** (production vs test code)
-- **Security patterns** (known safe vs dangerous patterns)
+Classification is based on file context, code patterns, and AI analysis. Confidence scores are included so you can judge the reliability of each decision.
 
 ## Detailed Breakdown
 """
@@ -771,38 +765,38 @@ def create_dashboard():
         with gr.Row():
             gr.HTML("""
             <div class="hero-section">
-                <div class="hero-title">Sem.io CICD : AI Security Analysis Agent</div>
+                <div class="hero-title">Semio — Unified Security Findings Layer</div>
                 <div class="hero-subtitle">
-                    Stop drowning in false alarms. sem.io uses AI to analyze security scan results, filter out noise, and provide intelligent fix recommendations that developers can trust.
+                    One place for all your scanner output. Semio normalises findings from Semgrep, Bandit, Trivy, and OWASP Dependency-Check, adds AI-assisted triage and fix suggestions, and tracks vulnerability trends over time.
                 </div>
-                
+
                 <div class="features-grid">
                     <div class="feature-card">
-                        <div class="feature-title">AI-Powered Analysis</div>
-                        <div class="feature-desc">Processes security scan results from tools like Semgrep using advanced AI</div>
+                        <div class="feature-title">Multi-Scanner</div>
+                        <div class="feature-desc">Ingests Semgrep, Bandit, Trivy, and OWASP DC — normalised into one view</div>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-title">Intelligent Filtering</div>
-                        <div class="feature-desc">Reduces noise by 80% by understanding code context and patterns</div>
+                        <div class="feature-title">AI Triage</div>
+                        <div class="feature-desc">Classifies each finding: AUTO_FIX, SUGGEST, or MANUAL_REVIEW with reasoning</div>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-title">Smart Fixes</div>
-                        <div class="feature-desc">Generates specific, tested solutions for each real security issue</div>
+                        <div class="feature-title">Fix Suggestions</div>
+                        <div class="feature-desc">AI-generated code fixes with confidence scores — copy or apply directly</div>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-title">Complete Transparency</div>
-                        <div class="feature-desc">Tracks every analysis decision with full audit trails</div>
+                        <div class="feature-title">Trend Tracking</div>
+                        <div class="feature-desc">Scan history per project so you can see your security posture improve over time</div>
                     </div>
                 </div>
-                
+
                 <div class="benefits-section">
-                    <div class="benefits-title">How the Security Process Works:</div>
-                    <div class="benefit-item">• <strong>Automated Scanning:</strong> Your CI/CD pipeline automatically triggers security scans on every code commit</div>
-                    <div class="benefit-item">• <strong>AI Analysis:</strong> sem.io receives scan results and uses AI to separate real threats from false alarms</div>
-                    <div class="benefit-item">• <strong>Actionable Insights:</strong> Provides prioritized, context-aware recommendations that developers can implement immediately</div>
+                    <div class="benefits-title">How it works:</div>
+                    <div class="benefit-item">• <strong>Run any scanner:</strong> Semgrep, Bandit, Trivy, or OWASP DC output JSON as usual</div>
+                    <div class="benefit-item">• <strong>Upload or pipe to Semio:</strong> Via this UI or the <code>semio analyze</code> CLI</div>
+                    <div class="benefit-item">• <strong>Review prioritised findings:</strong> Each finding is classified and a fix is suggested with a confidence score</div>
                 </div>
                 <div class="hero-quote">
-                    Think of it as having a security expert who takes the raw output from your security tools and transforms it into clear, actionable intelligence that your team can trust and act upon.
+                    Self-hostable and scanner-agnostic. Works with whatever tools your CI already runs.
                 </div>
             </div>
             """)

@@ -1,5 +1,5 @@
 ---
-title: Sem.io CICD - AI Security Analysis Agent
+title: Semio - Unified Security Findings Layer
 emoji: 🔒
 colorFrom: blue
 colorTo: purple
@@ -8,35 +8,35 @@ sdk_version: 4.7.1
 app_file: app.py
 pinned: false
 license: mit
-short_description: AI-powered security analysis agent for CI/CD pipelines
+short_description: Unified security findings layer for CI/CD pipelines
 ---
 
-# Sem.io CICD : AI Security Analysis Agent
+# Semio — Unified Security Findings Layer
 
-An intelligent security analysis agent that transforms static security scan results into actionable insights with AI-powered false positive detection and fix recommendations.
+Semio normalises output from multiple security scanners (Semgrep, Bandit, Trivy, OWASP Dependency-Check) into a single findings layer, adds AI-assisted triage and fix suggestions, and tracks vulnerability trends across scan runs over time.
 
-## 🚀 Features
+## Features
 
-- **Context-Aware Analysis**: Reads actual source code to understand vulnerability context
-- **AI-Powered False Positive Detection**: Reduces noise with intelligent filtering
-- **Automated Fix Generation**: Provides secure code fixes with explanations
-- **CI/CD Integration**: Seamlessly integrates with GitLab and GitHub pipelines
-- **Comprehensive Reporting**: Detailed analysis with confidence scores and reasoning
+- **Multi-Scanner Support**: Ingests JSON output from Semgrep, Bandit, Trivy, and OWASP Dependency-Check — no vendor lock-in
+- **AI-Assisted Triage**: Context-aware analysis classifies each finding as AUTO_FIX, SUGGEST, or MANUAL_REVIEW
+- **Fix Suggestions**: AI-generated code fixes with confidence scores and explanations
+- **Scan History & Trends**: Track findings count and severity distribution across scan runs per project
+- **CI/CD Integration**: Integrates with GitLab and GitHub pipelines via CLI
+- **Self-Hostable**: Run entirely on your own infrastructure — no code leaves your environment
 
-## 🛠️ How It Works
+## How It Works
 
-1. **Upload Semgrep Results**: Upload JSON output from your Semgrep security scan
-2. **AI Analysis**: sem.io reads your codebase and performs context-aware analysis
-3. **False Positive Detection**: Intelligent filtering reduces false positives
-4. **Fix Recommendations**: Get AI-generated secure code fixes with explanations
-5. **Pipeline Integration**: Use the CLI for automated CI/CD integration
+1. **Run your scanner**: Any supported tool outputs JSON
+2. **Upload or pipe to Semio**: Via the demo UI or `semio analyze` CLI
+3. **AI triage**: Each finding is classified and a fix is suggested with a confidence score
+4. **Track over time**: Findings are stored per project so you can see trends across runs
 
-## 📋 Usage
+## Usage
 
-1. **Demo**: Use the "Load Sample Data" button to see sem.io in action
-2. **Upload**: Upload your own Semgrep JSON results
-3. **Analyze**: Click "Analyze Vulnerabilities" to get detailed insights
-4. **Review**: Examine false positive analysis and fix recommendations
+1. **Demo**: Click "Load Sample Data" to see Semio in action
+2. **Upload**: Upload scanner JSON output (Semgrep, Bandit, Trivy, or OWASP DC)
+3. **Analyze**: Click "Analyze" to get prioritised findings with fix suggestions
+4. **Review**: Inspect AI decisions, copy fixes, track across runs
 
 ## 🔧 CLI Integration
 

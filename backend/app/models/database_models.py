@@ -157,6 +157,83 @@ class MonthlyUsageReset(Base):
     )
 
 
+class Project(Base):
+    """
+    A named project grouping scan runs for trend tracking.
+    """
+    __tablename__ = "projects"
+
+    id = Column(String(36), primary_key=True, index=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    scan_runs = relationship("ScanRun", back_populates="project", cascade="all, delete-orphan", order_by="ScanRun.created_at.desc()")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "name", name="uq_project_user_name"),
+        Index("idx_projects_user", "user_id", "created_at"),
+    )
+
+
+class ScanRun(Base):
+    """
+    One execution of a scanner against a project.
+    Stores aggregate counts; individual findings in Finding table.
+    """
+    __tablename__ = "scan_runs"
+
+    id = Column(String(36), primary_key=True, index=True)
+    project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    scanner = Column(String(50), nullable=False)          # semgrep | bandit | trivy | dependency-check
+    total_findings = Column(Integer, default=0, nullable=False)
+    error_count = Column(Integer, default=0, nullable=False)    # HIGH/CRITICAL
+    warning_count = Column(Integer, default=0, nullable=False)  # MEDIUM
+    info_count = Column(Integer, default=0, nullable=False)     # LOW/INFO
+    auto_fix_count = Column(Integer, default=0, nullable=False)
+    suggest_count = Column(Integer, default=0, nullable=False)
+    suppress_count = Column(Integer, default=0, nullable=False)
+    manual_review_count = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
+    project = relationship("Project", back_populates="scan_runs")
+    findings = relationship("Finding", back_populates="scan_run", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("idx_scan_runs_project_date", "project_id", "created_at"),
+    )
+
+
+class Finding(Base):
+    """
+    Individual normalised finding from a scan run.
+    """
+    __tablename__ = "findings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    scan_run_id = Column(String(36), ForeignKey("scan_runs.id", ondelete="CASCADE"), nullable=False, index=True)
+    rule_id = Column(String(255), nullable=False)
+    path = Column(Text, nullable=False)
+    start_line = Column(Integer, default=0, nullable=False)
+    severity = Column(String(20), nullable=False)          # ERROR | WARNING | INFO | UNKNOWN
+    action = Column(String(20), nullable=True)             # AUTO_FIX | SUGGEST | SUPPRESS | MANUAL_REVIEW
+    confidence = Column(Integer, nullable=True)            # 0–100
+    scanner = Column(String(50), nullable=False)
+    message = Column(Text, nullable=True)
+    suggested_fix = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    scan_run = relationship("ScanRun", back_populates="findings")
+
+    __table_args__ = (
+        Index("idx_findings_scan_run", "scan_run_id"),
+        Index("idx_findings_severity", "severity"),
+        Index("idx_findings_rule", "rule_id"),
+    )
+
+
 class APIKey(Base):
     """
     Separate table for API key management (alternative approach).
